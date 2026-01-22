@@ -1,0 +1,359 @@
+<html>
+<head>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  overflow: hidden;
+  font-family: "Courier New", Courier, "Lucida Console", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#text-container {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background:
+    radial-gradient(ellipse at 25% 25%, rgba(40, 70, 140, 0.35) 0%, transparent 45%),
+    radial-gradient(ellipse at 75% 75%, rgba(60, 40, 120, 0.32) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(30, 60, 120, 0.5) 0%, transparent 70%),
+    linear-gradient(180deg, #01030b 0%, #050a18 35%, #08122c 60%, #050a18 80%, #01030b 100%);
+  box-shadow:
+    inset 0 0 120px rgba(10, 20, 60, 0.9),
+    inset 0 0 240px rgba(20, 10, 60, 0.6);
+  animation: waterShimmer 8s ease-in-out infinite;
+}
+
+#text-container::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.06), transparent 35%),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.05), transparent 40%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.02) 4%, transparent 8%, transparent 12%);
+  opacity: 0.55;
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  animation: caustics 16s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes waterShimmer {
+  0%, 100% {
+    background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%, 0% 0%, 50% 50%, 0% 0%;
+  }
+}
+
+@keyframes caustics {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1.05) rotate(12deg);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(0.98) rotate(-8deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.45;
+  }
+}
+
+#triangle {
+  position: relative;
+  z-index: 1;
+  width: 115vmin;
+  height: 100vmin;
+  margin-top: 12vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(50% 99.6%, 0% 0%, 100% 0%);
+  background: linear-gradient(0deg,
+    rgba(2, 5, 15, 0.42) 0%,
+    rgba(7, 18, 43, 0.38) 48%,
+    rgba(12, 31, 70, 0.34) 100%);
+  box-shadow:
+    inset 0 0 60px rgba(18, 50, 120, 0.18),
+    0 0 22px rgba(24, 48, 110, 0.1);
+  transform: translateY(12vh) scale(0.05) rotate(-15deg);
+  opacity: 0;
+  filter: blur(10px);
+  transition:
+    transform 3s ease-out,
+    opacity 3s ease-out,
+    filter 3s ease-out;
+}
+
+
+#zoom-text {
+  position: absolute;
+  z-index: 1;
+  color: white;
+  font-size: 14vmin;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  top: 58%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  line-height: 1.05;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  opacity: 0;
+  text-shadow:
+    0 1px 0 rgba(150, 180, 255, 0.4),
+    0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 3px 3px rgba(0, 0, 0, 0.7),
+    0 6px 6px rgba(0, 0, 0, 0.5),
+    0 10px 10px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(100, 150, 255, 0.5);
+  filter: blur(20px);
+  transition: filter 3s ease-out;
+}
+
+.word {
+  display: block;
+  white-space: nowrap;
+}
+
+#measure {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  visibility: hidden;
+  white-space: nowrap;
+  font-family: "Courier New", Courier, "Lucida Console", monospace;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@keyframes bounce {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.02) rotate(0.5deg); }
+  60% { transform: scale(0.99) rotate(-0.3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes float {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1) rotate(3deg); }
+  50% { transform: scale(1) rotate(0deg); }
+  75% { transform: scale(1) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.bubble {
+  position: absolute;
+  bottom: -20px;
+  --drift-start: 0px;
+  --drift-end: 0px;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.15) 30%, rgba(180, 200, 255, 0.08) 45%, rgba(40, 60, 120, 0.05) 70%, rgba(10, 20, 40, 0) 90%),
+    radial-gradient(circle at 70% 75%, rgba(120, 160, 255, 0.25), rgba(20, 30, 80, 0.05) 55%, rgba(10, 20, 40, 0) 85%);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.35),
+    inset 0 0 18px rgba(80, 120, 200, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+  mix-blend-mode: screen;
+  filter: saturate(1.2);
+  animation: rise linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes rise {
+  0% {
+    transform: translate(var(--drift-start), 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(var(--drift-end), -100vh) scale(0.55);
+    opacity: 0;
+  }
+}
+
+</style>
+
+</head>
+
+<body>
+<div id="text-container">
+  <div id="triangle">
+    <div id="zoom-text"></div>
+  </div>
+</div>
+<script>
+  const texts = [
+    "THEY'RE EATING THE DOGS!",
+    "SHUT UP PIGGY",
+    "COVEFE",
+    "BIGLY",
+    "MANY PEOPLE ARE SAYING YES",
+    "MANY PEOPLE ARE SAYING NO",
+    "FAKE NEWS",
+    "YEAH YOU RIGHT",
+    "SAD!",
+    "DRINK BLEACH",
+    "EVERYONE AGREES",
+    "WITCH HUNT",
+    "WE NEVER MET",
+  ];
+
+  const zoomText = document.getElementById("zoom-text");
+  const triangle = document.getElementById("triangle");
+  const textContainer = document.getElementById("text-container");
+  const measure = document.createElement("div");
+  measure.id = "measure";
+  document.body.appendChild(measure);
+
+  // Create bubbles
+  function createBubble() {
+    const bubbleCount = Math.random() < 0.35 ? 3 : 1;
+    for (let i = 0; i < bubbleCount; i++) {
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.style.left = Math.random() * 100 + "%";
+      const size = Math.random() * 18 + 6;
+      bubble.style.width = bubble.style.height = size + "px";
+      bubble.style.animationDuration = (Math.random() * 7 + 5) + "s";
+      bubble.style.animationDelay = (Math.random() * 1.2) + "s";
+      bubble.style.setProperty("--drift-start", (Math.random() * 14 - 7) + "px");
+      bubble.style.setProperty("--drift-end", (Math.random() * 20 - 10) + "px");
+      textContainer.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 14000);
+    }
+  }
+  setInterval(createBubble, 1200);
+
+  let lastText = '';
+  function getRandomText() {
+    let text;
+    do {
+      text = texts[Math.floor(Math.random() * texts.length)];
+    } while (text === lastText && texts.length > 1);
+    lastText = text;
+    return text;
+  }
+
+  function getAvailableWidth(topPercent) {
+    const ratio = Math.min(Math.max(parseFloat(topPercent) / 100, 0), 1);
+    const baseWidth = triangle.clientWidth || window.innerWidth;
+    const widthFactor = Math.max(0.05, 1 - ratio);
+    return baseWidth * widthFactor * 0.85; // keep a margin so words never touch edges
+  }
+
+  function measureWord(word, size) {
+    measure.style.fontSize = size + "vmin";
+    measure.textContent = word;
+    return measure.getBoundingClientRect().width;
+  }
+
+  function getTextStyle(text) {
+    const words = text.split(" ");
+    const wordCount = words.length;
+    const baseSizes = { 1: 28, 2: 18, 3: 14, 4: 11, 5: 9 };
+    const topPositions = { 1: "25%", 2: "28%", 3: "30%", 4: "32%", 5: "33%" };
+    const baseSize = baseSizes[wordCount] || 9;
+    const top = topPositions[wordCount] || "33%";
+    const availableWidth = getAvailableWidth(top);
+
+    let size = baseSize;
+    let widest = Math.max(...words.map(w => measureWord(w, size)));
+    if (widest > availableWidth) {
+      const shrinkRatio = availableWidth / widest;
+      size = Math.max(4, Math.floor(baseSize * shrinkRatio * 0.94));
+      widest = Math.max(...words.map(w => measureWord(w, size)));
+      if (widest > availableWidth) {
+        size = Math.max(3.5, Math.floor(size * (availableWidth / widest) * 0.96));
+      }
+    }
+
+    return { size: size + "vmin", top };
+  }
+
+  function showText() {
+    // Reset animation state
+    triangle.style.transition = "none";
+    triangle.style.transform = "translateY(12vh) scale(0.05) rotate(-15deg)";
+    triangle.style.opacity = "0";
+    triangle.style.animation = "none";
+    triangle.style.filter = "blur(12px)";
+    zoomText.style.transition = "none";
+    zoomText.style.filter = "blur(20px)";
+    zoomText.style.opacity = "0";
+
+    // Set text with dynamic font size and position
+    const text = getRandomText();
+    const words = text.split(" ");
+    zoomText.innerHTML = "";
+    const style = getTextStyle(text);
+    words.forEach(word => {
+      const span = document.createElement("span");
+      span.className = "word";
+      span.textContent = word;
+      zoomText.appendChild(span);
+    });
+    zoomText.style.fontSize = style.size;
+    zoomText.style.top = style.top;
+
+    // Force reflow
+    triangle.offsetHeight;
+
+    // Animate in
+    triangle.style.transition =
+      "transform 3s ease-out, opacity 3s ease-out, filter 3s ease-out";
+    triangle.style.transform = "translateY(0) scale(1) rotate(0deg)";
+    triangle.style.opacity = "1";
+    triangle.style.filter = "blur(0px)";
+    zoomText.style.transition = "filter 3s ease-out, opacity 3s ease-out";
+    zoomText.style.filter = "blur(0)";
+    zoomText.style.opacity = "1";
+
+    // Outro: shrink/fade faster than intro, no bounce/float
+    setTimeout(() => {
+      triangle.style.animation = "none";
+      triangle.style.transition = "transform 1.5s ease-in, opacity 1.5s ease-in, filter 1.5s ease-in";
+      zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in";
+      triangle.style.transform = "translateY(12vh) scale(0.05) rotate(8deg)";
+      triangle.style.opacity = "0";
+      triangle.style.filter = "blur(14px)";
+      zoomText.style.filter = "blur(18px)";
+      zoomText.style.opacity = "0";
+    }, 8000);
+
+    // Change text after float back
+    setTimeout(showText, 9800);
+  }
+
+  showText();
+</script>
+</body>
+</html>
