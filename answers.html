@@ -193,35 +193,42 @@ html, body {
   <div id="zoom-text"></div>
 </div>
 <script>
-  // DISPLAY MODE: "length" (longest to shortest) or "random"
-  const DISPLAY_MODE = "length";
+  // DISPLAY MODE: "length" (longest to shortest), "random", or "weighted" (by rating)
+  // Override via URL: ?mode=l (length) or ?mode=w (weighted), default is random
+  const urlParams = new URLSearchParams(window.location.search);
+  const modeParam = urlParams.get('mode');
+  const DISPLAY_MODE = modeParam === 'l' ? 'length' : modeParam === 'w' ? 'weighted' : 'random';
 
-  const texts = [
-    "THEY'RE EATING THE DOGS!",
-    "QUIET PIGGY",
-    "COVFEFE",
-    "BIGLY",
-    "MANY PEOPLE ARE SAYING YES",
-    "MANY PEOPLE ARE SAYING NO",
-    "FAKE NEWS",
-    "YEAH YOU RIGHT",
-    "SAD!",
-    "DRINK BLEACH",
-    "EVERYONE AGREES",
-    "WITCH HUNT",
-    "WE NEVER MET",
-    "MORE TARIFFS",
-    "SCAM",
-    "LOSER",
-    "RIGGED",
-    "HOAX",
-    "WHAT A STUPID QUESTION",
-    "FAILING NEW YORK TIMES",
-    "A THIRD-RATE REPORTER WHO IS UGLY",
-    "RUSSIA RUSSIA RUSSIA",
-    "DRILL BABY DRILL",
-    "THANK YOU FOR YOUR ATTENTION IN THIS MATTER",
+  // Each text has a rating 1-5 (higher = shown more frequently)
+  const textsWithRatings = [
+    { text: "THEY'RE EATING THE DOGS!", rating: 5 },
+    { text: "QUIET PIGGY", rating: 2 },
+    { text: "COVFEFE", rating: 4 },
+    { text: "BIGLY", rating: 3 },
+    { text: "MANY PEOPLE ARE SAYING YES", rating: 2 },
+    { text: "MANY PEOPLE ARE SAYING NO", rating: 3 },
+    { text: "FAKE NEWS", rating: 5 },
+    { text: "YEAH YOU RIGHT", rating: 1 },
+    { text: "SAD!", rating: 4 },
+    { text: "DRINK BLEACH", rating: 3 },
+    { text: "EVERYONE AGREES", rating: 2 },
+    { text: "WITCH HUNT", rating: 4 },
+    { text: "WE NEVER MET", rating: 2 },
+    { text: "MORE TARIFFS", rating: 3 },
+    { text: "SCAM", rating: 3 },
+    { text: "LOSER", rating: 4 },
+    { text: "RIGGED", rating: 5 },
+    { text: "HOAX", rating: 3 },
+    { text: "WHAT A STUPID QUESTION", rating: 4 },
+    { text: "FAILING NEW YORK TIMES", rating: 3 },
+    { text: "A THIRD-RATE REPORTER WHO IS UGLY", rating: 2 },
+    { text: "RUSSIA RUSSIA RUSSIA", rating: 5 },
+    { text: "DRILL BABY DRILL", rating: 4 },
+    { text: "THANK YOU FOR YOUR ATTENTION IN THIS MATTER", rating: 1 },
   ];
+
+  // Extract just text strings for backwards compatibility
+  const texts = textsWithRatings.map(t => t.text);
 
   const zoomText = document.getElementById("zoom-text");
   const textContainer = document.getElementById("text-container");
@@ -269,13 +276,29 @@ html, body {
   let lengthIndex = 0;
   let lastText = '';
 
+  // Build weighted pool for weighted mode
+  const weightedPool = [];
+  textsWithRatings.forEach(item => {
+    for (let i = 0; i < item.rating; i++) {
+      weightedPool.push(item.text);
+    }
+  });
+
   function getNextText() {
     if (DISPLAY_MODE === "length") {
       const text = textsByLength[lengthIndex];
       lengthIndex = (lengthIndex + 1) % textsByLength.length;
       return text;
+    } else if (DISPLAY_MODE === "weighted") {
+      // Weighted random mode - higher ratings appear more often
+      let text;
+      do {
+        text = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      } while (text === lastText && texts.length > 1);
+      lastText = text;
+      return text;
     } else {
-      // Random mode
+      // Random mode (equal probability)
       let text;
       do {
         text = texts[Math.floor(Math.random() * texts.length)];
@@ -377,7 +400,7 @@ html, body {
 
     // Outro: shrink/fade faster than intro
     setTimeout(() => {
-      const exitRotate = (Math.random() * 12 - 6); // Random -6 to 6 degrees
+      const exitRotate = (Math.random() * 30 - 15); // Random -15 to 15 degrees
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
