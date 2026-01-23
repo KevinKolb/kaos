@@ -321,6 +321,16 @@ html, body {
       return words;
     }
 
+    // 3-word texts: one word per line
+    if (words.length === 3) {
+      return words;
+    }
+
+    // 4-word texts: 3 lines (1-2-1 pattern)
+    if (words.length === 4) {
+      return [words[0], words[1] + " " + words[2], words[3]];
+    }
+
     const lines = [];
     for (let i = 0; i < words.length; i += 2) {
       if (i + 1 < words.length) {
