@@ -198,7 +198,7 @@ html, body {
 
   const texts = [
     "THEY'RE EATING THE DOGS!",
-    "SHUT UP PIGGY",
+    "QUIET PIGGY",
     "COVFEFE",
     "BIGLY",
     "MANY PEOPLE ARE SAYING YES",
@@ -220,6 +220,7 @@ html, body {
     "A THIRD-RATE REPORTER WHO IS UGLY",
     "RUSSIA RUSSIA RUSSIA",
     "DRILL BABY DRILL",
+    "THANK YOU FOR YOUR ATTENTION IN THIS MATTER",
   ];
 
   const zoomText = document.getElementById("zoom-text");
@@ -376,10 +377,11 @@ html, body {
 
     // Outro: shrink/fade faster than intro
     setTimeout(() => {
+      const exitRotate = (Math.random() * 12 - 6); // Random -6 to 6 degrees
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
-      zoomText.style.transform = "translate(-50%, -50%) scale(0.35)";
+      zoomText.style.transform = `translate(-50%, -50%) scale(0.35) rotate(${exitRotate}deg)`;
     }, 8000);
 
     // Change text after float back
