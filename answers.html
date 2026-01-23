@@ -1,5 +1,6 @@
 <html>
 <head>
+<title>Answers MAGA Hate Ball</title>
 <style>
 html, body {
   margin: 0;
@@ -131,13 +132,13 @@ html, body {
   --drift-start: 0px;
   --drift-end: 0px;
   background:
-    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.15) 30%, rgba(180, 200, 255, 0.08) 45%, rgba(40, 60, 120, 0.05) 70%, rgba(10, 20, 40, 0) 90%),
-    radial-gradient(circle at 70% 75%, rgba(120, 160, 255, 0.25), rgba(20, 30, 80, 0.05) 55%, rgba(10, 20, 40, 0) 85%);
+    radial-gradient(circle at 30% 28%, rgba(200, 180, 255, 0.7), rgba(180, 150, 220, 0.15) 30%, rgba(120, 80, 180, 0.12) 45%, rgba(80, 50, 120, 0.08) 70%, rgba(40, 20, 60, 0) 90%),
+    radial-gradient(circle at 70% 75%, rgba(140, 100, 200, 0.3), rgba(60, 40, 100, 0.1) 55%, rgba(30, 20, 50, 0) 85%);
   border-radius: 50%;
   box-shadow:
-    inset 0 0 6px rgba(255, 255, 255, 0.35),
-    inset 0 0 18px rgba(80, 120, 200, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.35);
+    inset 0 0 6px rgba(200, 180, 255, 0.35),
+    inset 0 0 18px rgba(120, 80, 180, 0.2),
+    0 2px 8px rgba(20, 10, 40, 0.4);
   mix-blend-mode: screen;
   filter: saturate(1.2);
   animation: rise linear infinite;
@@ -159,6 +160,30 @@ html, body {
   }
 }
 
+@keyframes riseMeander {
+  0% {
+    transform: translate(var(--drift-start), 0) scale(1);
+    opacity: 0.6;
+  }
+  20% {
+    transform: translate(calc(var(--drift-start) + var(--meander-amt)), -20vh) scale(0.9);
+  }
+  40% {
+    transform: translate(calc(var(--drift-start) - var(--meander-amt)), -40vh) scale(0.8);
+    opacity: 0.4;
+  }
+  60% {
+    transform: translate(calc(var(--drift-end) + var(--meander-amt)), -60vh) scale(0.7);
+  }
+  80% {
+    transform: translate(calc(var(--drift-end) - var(--meander-amt)), -80vh) scale(0.6);
+  }
+  100% {
+    transform: translate(var(--drift-end), -100vh) scale(0.55);
+    opacity: 0;
+  }
+}
+
 </style>
 
 </head>
@@ -168,6 +193,9 @@ html, body {
   <div id="zoom-text"></div>
 </div>
 <script>
+  // DISPLAY MODE: "length" (longest to shortest) or "random"
+  const DISPLAY_MODE = "length";
+
   const texts = [
     "THEY'RE EATING THE DOGS!",
     "SHUT UP PIGGY",
@@ -190,7 +218,7 @@ html, body {
     "WHAT A STUPID QUESTION",
     "FAILING NEW YORK TIMES",
     "A THIRD-RATE REPORTER WHO IS UGLY",
-    "RUSSIA, RUSSIA, RUSSIA",
+    "RUSSIA RUSSIA RUSSIA",
     "DRILL BABY DRILL",
   ];
 
@@ -215,24 +243,41 @@ html, body {
         : Math.random() * 25 + 6;    // 80% chance: small bubbles (6-31px)
       bubble.style.width = bubble.style.height = size + "px";
       bubble.style.zIndex = size > 50 ? -1 : 0;  // Large bubbles behind text
-      bubble.style.animationDuration = (Math.random() * 7 + 5) + "s";
+      // More varied speeds: 3-18 seconds
+      bubble.style.animationDuration = (Math.random() * 15 + 3) + "s";
       bubble.style.animationDelay = (Math.random() * 1.2) + "s";
       bubble.style.setProperty("--drift-start", (Math.random() * 14 - 7) + "px");
       bubble.style.setProperty("--drift-end", (Math.random() * 20 - 10) + "px");
+      // 30% chance to meander
+      if (Math.random() < 0.3) {
+        bubble.style.setProperty("--meander-amt", (Math.random() * 40 + 20) + "px");
+        bubble.style.animationName = "riseMeander";
+      }
       textContainer.appendChild(bubble);
       setTimeout(() => bubble.remove(), 14000);
     }
   }
   setInterval(createBubble, 1200);
 
+  // Sort texts by length (longest first) for length mode
+  const textsByLength = [...texts].sort((a, b) => b.length - a.length);
+  let lengthIndex = 0;
   let lastText = '';
-  function getRandomText() {
-    let text;
-    do {
-      text = texts[Math.floor(Math.random() * texts.length)];
-    } while (text === lastText && texts.length > 1);
-    lastText = text;
-    return text;
+
+  function getNextText() {
+    if (DISPLAY_MODE === "length") {
+      const text = textsByLength[lengthIndex];
+      lengthIndex = (lengthIndex + 1) % textsByLength.length;
+      return text;
+    } else {
+      // Random mode
+      let text;
+      do {
+        text = texts[Math.floor(Math.random() * texts.length)];
+      } while (text === lastText && texts.length > 1);
+      lastText = text;
+      return text;
+    }
   }
 
   function getAvailableWidth(topPercent) {
@@ -249,9 +294,9 @@ html, body {
   function getTextStyle(text) {
     const words = text.split(" ");
     const wordCount = words.length;
-    const baseSizes = { 1: 50, 2: 34, 3: 28, 4: 22, 5: 18 };
-    const topPositions = { 1: "45%", 2: "48%", 3: "50%", 4: "52%", 5: "54%" };
-    const baseSize = baseSizes[wordCount] || 9;
+    const baseSizes = { 1: 50, 2: 34, 3: 28, 4: 24, 5: 22, 6: 20, 7: 18, 8: 16 };
+    const topPositions = { 1: "45%", 2: "48%", 3: "50%", 4: "50%", 5: "50%", 6: "50%", 7: "50%", 8: "50%" };
+    const baseSize = baseSizes[wordCount] || 14;
     const top = topPositions[wordCount] || "33%";
     const availableWidth = getAvailableWidth(top);
 
@@ -269,6 +314,24 @@ html, body {
     return { size: size + "vmin", top };
   }
 
+  // Group words into lines - max 2 words per line
+  function groupWordsIntoLines(words) {
+    // 2-word texts: one word per line
+    if (words.length === 2) {
+      return words;
+    }
+
+    const lines = [];
+    for (let i = 0; i < words.length; i += 2) {
+      if (i + 1 < words.length) {
+        lines.push(words[i] + " " + words[i + 1]);
+      } else {
+        lines.push(words[i]);
+      }
+    }
+    return lines;
+  }
+
   function showText() {
     // Reset animation state
     zoomText.style.transition = "none";
@@ -277,14 +340,15 @@ html, body {
     zoomText.style.transform = "translate(-50%, -50%) scale(0.6) rotate(-8deg)";
 
     // Set text with dynamic font size and position
-    const text = getRandomText();
+    const text = getNextText();
     const words = text.split(" ");
     zoomText.innerHTML = "";
     const style = getTextStyle(text);
-    words.forEach(word => {
+    const lines = groupWordsIntoLines(words);
+    lines.forEach(line => {
       const span = document.createElement("span");
       span.className = "word";
-      span.textContent = word;
+      span.textContent = line;
       zoomText.appendChild(span);
     });
     zoomText.style.fontSize = style.size;
