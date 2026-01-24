@@ -1,0 +1,9 @@
+# Windows reserved device names
+nul
+NUL
+con
+CON
+aux
+AUX
+prn
+PRN
