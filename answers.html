@@ -26,43 +26,6 @@ html, body {
   background: #4662bd;
 }
 
-#text-container::before {
-  content: "";
-  position: absolute;
-  inset: -20%;
-  background: transparent;
-  opacity: 0;
-  filter: none;
-  mix-blend-mode: normal;
-  animation: none;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes waterShimmer {
-  0%, 100% { background-position: 0 0; }
-  50% { background-position: 100% 100%; }
-}
-
-@keyframes caustics {
-  0% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.45;
-  }
-  40% {
-    transform: scale(1.05) rotate(12deg);
-    opacity: 0.6;
-  }
-  70% {
-    transform: scale(0.98) rotate(-8deg);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.45;
-  }
-}
-
 #zoom-text {
   position: absolute;
   z-index: 1;
@@ -77,12 +40,9 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%) scale(0.6);
   width: 90%;
-  line-height: 0.6;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.12em;
-  opacity: 0;
   text-shadow:
     0 1px 0 rgba(150, 180, 255, 0.4),
     0 -1px 2px rgba(0, 0, 0, 0.6),
@@ -111,21 +71,6 @@ html, body {
   letter-spacing: 0.1em;
   word-spacing: -0.2em;
   text-transform: uppercase;
-}
-
-@keyframes bounce {
-  0% { transform: scale(1) rotate(0deg); }
-  30% { transform: scale(1.02) rotate(0.5deg); }
-  60% { transform: scale(0.99) rotate(-0.3deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-
-@keyframes float {
-  0% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1) rotate(3deg); }
-  50% { transform: scale(1) rotate(0deg); }
-  75% { transform: scale(1) rotate(-3deg); }
-  100% { transform: scale(1) rotate(0deg); }
 }
 
 .bubble {
@@ -183,11 +128,8 @@ html, body {
     opacity: 0;
   }
 }
-
 </style>
-
 </head>
-
 <body>
 <div id="text-container">
   <div id="zoom-text"></div>
@@ -208,7 +150,6 @@ html, body {
     { text: "MANY PEOPLE ARE SAYING YES", rating: 5 },
     { text: "MANY PEOPLE ARE SAYING NO", rating: 5 },
     { text: "FAKE NEWS", rating: 5 },
-    { text: "YEAH YOU RIGHT", rating: 1 },
     { text: "SAD!", rating: 4 },
     { text: "DRINK BLEACH", rating: 3 },
     { text: "EVERYONE AGREES", rating: 2 },
@@ -308,9 +249,8 @@ html, body {
     }
   }
 
-  function getAvailableWidth(topPercent) {
-    const baseWidth = textContainer.clientWidth || window.innerWidth;
-    return baseWidth * 0.9;
+  function getAvailableWidth() {
+    return (textContainer.clientWidth || window.innerWidth) * 0.9;
   }
 
   function measureWord(word, size) {
@@ -326,7 +266,7 @@ html, body {
     const topPositions = { 1: "45%", 2: "48%", 3: "50%", 4: "50%", 5: "50%", 6: "50%", 7: "50%", 8: "50%" };
     const baseSize = baseSizes[wordCount] || 14;
     const top = topPositions[wordCount] || "33%";
-    const availableWidth = getAvailableWidth(top);
+    const availableWidth = getAvailableWidth();
 
     let size = baseSize;
     let widest = Math.max(...words.map(w => measureWord(w, size)));
