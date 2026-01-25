@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❓</text></svg>">
     <title>Questions MAGA Hate Ball</title>
     <style>
         * {
@@ -182,25 +183,26 @@
     <video id="signVideo" src="videos/KAOS_SIGN.mp4" autoplay muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 20;"></video>
 
     <div class="question-container">
-        <div class="question">Will you invade Greenland?</div>
-        <div class="question">Will you invade Canada?</div>
-        <div class="question">How many times did you go to the island?</div>
-        <div class="question">What's that thing on your hand?</div>
-        <div class="question">What's the deal with your ankles?</div>
-        <div class="question">Can you identify the giraffe?</div>
-        <div class="question">Who is going to run Venezuela?</div>
-        <div class="question">Where's Melania?</div>
-        <div class="question">When will food prices go down?</div>
-        <div class="question">What is the future of Gaza?</div>
-        <div class="question">Will there be a Trump Tower in Greenland?</div>
-        <div class="question">Will there be a Trump Tower in Gaza?</div>
-        <div class="question">Will there be a Trump Tower in Venezuela?</div>
-        <div class="question">What went on on the Island?</div>
-        <div class="question">What's the deal with you and Putin?</div>
-        <div class="question">Was it an MRI or a CT Scan?</div>
-        <div class="question">Kiss your daughter with that mouth?</div>
-        <div class="question">When is Eric's birthday?</div>
-        <div class="question">Are we Great Again yet?</div>
+        <div class="question">Should I invade Greenland?</div>
+        <div class="question">Will I invade Canada?</div>
+        <div class="question">Did I leave anything on the Island?</div>
+        <div class="question">Should I drink bleach for the thing on my hand?</div>
+        <div class="question">Are my ankles normal size?</div>
+        <div class="question">Are my hands smaller than Gavin's?</div>
+        <div class="question">Is that a giraffe on this test?</div>
+        <div class="question">Should I make Eric the President of Venezuela?</div>
+        <div class="question">Can I deport Melania?</div>
+        <div class="question">Are groceries food?</div>
+        <div class="question">Is Gaza in New Jersey?</div>
+        <div class="question">Is Greenland a made up name?</div>
+        <div class="question">Should I put a Trump Tower in Gaza?</div>
+        <div class="question">Should I put a Trump Tower in Venezuela?</div>
+        <div class="question">Am I due in court today?</div>
+        <div class="question">Should I send Vladimir a heart emoji?</div>
+        <div class="question">Are an MRI and a CT Scan the same thing?</div>
+        <div class="question">Does Ivanka enjoy kissing me on the lips?</div>
+        <div class="question">Should I bury my ex-wife in the backyard?</div>
+        <div class="question">Is America Great Again yet?</div>
     </div>
 
     <script>
@@ -234,19 +236,20 @@
             cloudsContainer.appendChild(cloud);
         }
 
-        // Video list - add your video filenames here
-        const videos = [
-            'KAOS_SIGN.mp4',
+        // Video sequence (after intro KAOS_SIGN, cycle through these)
+        const videoSequence = [
+            'ZOLTAR_EYES.mp4',
             'MAGA_HATE_BALL.mp4',
-            'ZOLTAR.mp4'
+            'ZOLTAR.mp4',
+            'ZOLTAR_ORANGE.mp4'
         ];
+        let videoIndex = 0;
 
         // Question rotation
         const questions = document.querySelectorAll('.question');
         const video = document.getElementById('signVideo');
         let currentIndex = Math.floor(Math.random() * questions.length);
-        let questionCount = 0;
-        let interval;
+        let isVideoPlaying = true; // Start true since intro video plays first
 
         // Calculate optimal font size to fit text within viewport
         function fitTextToScreen(element) {
@@ -276,7 +279,14 @@
         fitAllQuestions();
         window.addEventListener('resize', fitAllQuestions);
 
+        function hideAllQuestions() {
+            questions.forEach(q => {
+                q.classList.remove('active', 'fade-out');
+            });
+        }
+
         function showQuestion(index) {
+            if (isVideoPlaying) return; // Don't show questions during video
             questions.forEach((q, i) => {
                 q.classList.remove('active', 'fade-out');
                 if (i === index) {
@@ -286,20 +296,22 @@
         }
 
         function showVideo() {
-            clearInterval(interval);
+            isVideoPlaying = true;
             questions[currentIndex].classList.remove('active');
             questions[currentIndex].classList.add('fade-out');
 
             setTimeout(() => {
-                const randomVideo = videos[Math.floor(Math.random() * videos.length)];
-                video.src = 'videos/' + randomVideo;
+                hideAllQuestions(); // Ensure all questions are hidden
+                const nextVideo = videoSequence[videoIndex];
+                videoIndex = (videoIndex + 1) % videoSequence.length;
+                video.src = 'videos/' + nextVideo;
                 video.style.display = 'block';
                 video.currentTime = 0;
                 video.play().catch(e => {
                     console.log('Video play failed:', e);
                     video.style.display = 'none';
+                    isVideoPlaying = false;
                     nextQuestion();
-                    interval = setInterval(nextStep, 8000);
                 });
             }, 500);
         }
@@ -315,30 +327,17 @@
         }
 
         function nextStep() {
-            questionCount++;
-
-            if (questionCount % 3 === 0) {
-                showVideo();
-            } else {
-                questions[currentIndex].classList.remove('active');
-                questions[currentIndex].classList.add('fade-out');
-                setTimeout(nextQuestion, 500);
-            }
+            // After each question, show the next video
+            showVideo();
         }
 
-        // After video ends, start/continue questions
+        // After video ends, show next question, then schedule next video
         video.addEventListener('ended', function() {
             video.style.display = 'none';
-            if (questionCount === 0) {
-                // First time - after intro video
-                showQuestion(currentIndex);
-                questionCount = 1;
-                interval = setInterval(nextStep, 8000);
-            } else {
-                // After regular video breaks
-                nextQuestion();
-                interval = setInterval(nextStep, 8000);
-            }
+            isVideoPlaying = false;
+            nextQuestion();
+            // After 8 seconds of showing question, play next video
+            setTimeout(nextStep, 8000);
         });
 
         // Try to play video on load
@@ -346,9 +345,9 @@
             console.log('Autoplay blocked:', e);
             // If autoplay fails, skip to questions
             video.style.display = 'none';
+            isVideoPlaying = false;
             showQuestion(currentIndex);
-            questionCount = 1;
-            interval = setInterval(nextStep, 8000);
+            setTimeout(nextStep, 8000);
         });
 
         // Unmute on first click anywhere

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="48" fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+  <circle cx="50" cy="50" r="48" fill="url(#gradient)"/>
+  <defs>
+    <radialGradient id="gradient" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#444"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="45" r="22" fill="#1a237e"/>
+  <polygon points="50,30 65,55 35,55" fill="#fff"/>
+</svg>
