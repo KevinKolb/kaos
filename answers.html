@@ -41,9 +41,11 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%) scale(0.6);
   width: 90%;
+  height: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-shadow:
     0 1px 0 rgba(150, 180, 255, 0.4),
     0 -1px 2px rgba(0, 0, 0, 0.6),
@@ -253,7 +255,11 @@ html, body {
   }
 
   function getAvailableWidth() {
-    return (textContainer.clientWidth || window.innerWidth) * 0.9;
+    return (textContainer.clientWidth || window.innerWidth) * 0.88;
+  }
+
+  function getAvailableHeight() {
+    return (textContainer.clientHeight || window.innerHeight) * 0.85;
   }
 
   function measureWord(word, size) {
@@ -262,27 +268,39 @@ html, body {
     return measure.getBoundingClientRect().width;
   }
 
-  function getTextStyle(text) {
-    const words = text.split(" ");
-    const wordCount = words.length;
-    const baseSizes = { 1: 50, 2: 34, 3: 28, 4: 24, 5: 22, 6: 20, 7: 18, 8: 16 };
-    const topPositions = { 1: "45%", 2: "48%", 3: "50%", 4: "50%", 5: "50%", 6: "50%", 7: "50%", 8: "50%" };
-    const baseSize = baseSizes[wordCount] || 14;
-    const top = topPositions[wordCount] || "33%";
-    const availableWidth = getAvailableWidth();
+  function measureLineHeight(size) {
+    measure.style.fontSize = size + "vmin";
+    measure.textContent = "X";
+    return measure.getBoundingClientRect().height * 1.1; // line-height factor
+  }
 
-    let size = baseSize;
-    let widest = Math.max(...words.map(w => measureWord(w, size)));
-    if (widest > availableWidth) {
-      const shrinkRatio = availableWidth / widest;
-      size = Math.max(4, Math.floor(baseSize * shrinkRatio * 0.94));
-      widest = Math.max(...words.map(w => measureWord(w, size)));
-      if (widest > availableWidth) {
-        size = Math.max(3.5, Math.floor(size * (availableWidth / widest) * 0.96));
-      }
+  function getTextStyle(text, lines) {
+    const words = text.split(" ");
+    const lineCount = lines.length;
+    const availableWidth = getAvailableWidth();
+    const availableHeight = getAvailableHeight();
+
+    // Start with a large size and shrink to fit
+    let size = 60;
+
+    // Find the widest line
+    const getWidestLine = (s) => Math.max(...lines.map(line => measureWord(line, s)));
+
+    // Shrink to fit width
+    let widest = getWidestLine(size);
+    while (widest > availableWidth && size > 4) {
+      size -= 1;
+      widest = getWidestLine(size);
     }
 
-    return { size: size + "vmin", top };
+    // Shrink to fit height
+    let totalHeight = measureLineHeight(size) * lineCount;
+    while (totalHeight > availableHeight && size > 4) {
+      size -= 1;
+      totalHeight = measureLineHeight(size) * lineCount;
+    }
+
+    return { size: size + "vmin" };
   }
 
   // Group words into lines - max 2 words per line
@@ -320,12 +338,12 @@ html, body {
     zoomText.style.opacity = "0";
     zoomText.style.transform = "translate(-50%, -50%) scale(0.6) rotate(-8deg)";
 
-    // Set text with dynamic font size and position
+    // Set text with dynamic font size
     const text = getNextText();
     const words = text.split(" ");
-    zoomText.innerHTML = "";
-    const style = getTextStyle(text);
     const lines = groupWordsIntoLines(words);
+    const style = getTextStyle(text, lines);
+    zoomText.innerHTML = "";
     lines.forEach(line => {
       const span = document.createElement("span");
       span.className = "word";
@@ -333,7 +351,6 @@ html, body {
       zoomText.appendChild(span);
     });
     zoomText.style.fontSize = style.size;
-    zoomText.style.top = style.top;
 
     // Animate in
     zoomText.style.transition = "filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out";

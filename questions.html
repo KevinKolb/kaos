@@ -130,19 +130,21 @@
             font-weight: 900;
             text-transform: uppercase;
             color: #fff;
-            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+            text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.9);
             opacity: 0;
             transform: scale(0.95);
             transition: opacity 0.5s ease, transform 0.5s ease;
             position: absolute;
             text-align: center;
-            padding: 5vw;
-            line-height: 1.2;
-            max-width: 90vw;
-            max-height: 90vh;
+            padding: 2vw;
+            line-height: 1.05;
+            width: 96vw;
+            max-height: 94vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .question.active {
@@ -251,29 +253,40 @@
         let currentIndex = Math.floor(Math.random() * questions.length);
         let isVideoPlaying = true; // Start true since intro video plays first
 
-        // Calculate optimal font size to fit text within viewport
+        // Calculate optimal font size based on text length and viewport
         function fitTextToScreen(element) {
-            const maxWidth = window.innerWidth * 0.9;
-            const maxHeight = window.innerHeight * 0.9;
-            let fontSize = Math.min(window.innerWidth, window.innerHeight) * 0.15;
+            const text = element.textContent;
+            const charCount = text.length;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            // Use width as primary constraint since text wraps
+            // Calculate how many chars fit per line at a given size
+            // Aim to fill screen with 1-3 lines
+
+            let fontSize;
+            if (charCount <= 15) {
+                fontSize = vw * 0.18;   // Very short - 1 line huge
+            } else if (charCount <= 25) {
+                fontSize = vw * 0.12;   // Short - 1-2 lines
+            } else if (charCount <= 35) {
+                fontSize = vw * 0.09;   // Medium - 2 lines
+            } else if (charCount <= 50) {
+                fontSize = vw * 0.07;   // Long - 2-3 lines
+            } else {
+                fontSize = vw * 0.055;  // Very long - 3+ lines
+            }
+
+            // Cap at viewport height consideration
+            const maxByHeight = vh * 0.25;
+            fontSize = Math.min(fontSize, maxByHeight);
 
             element.style.fontSize = fontSize + 'px';
-
-            while ((element.scrollWidth > maxWidth || element.scrollHeight > maxHeight) && fontSize > 10) {
-                fontSize -= 2;
-                element.style.fontSize = fontSize + 'px';
-            }
         }
 
         // Fit all questions on load and resize
         function fitAllQuestions() {
-            questions.forEach(q => {
-                q.style.opacity = '0';
-                q.style.display = 'flex';
-                fitTextToScreen(q);
-                q.style.display = '';
-                q.style.opacity = '';
-            });
+            questions.forEach(q => fitTextToScreen(q));
         }
 
         fitAllQuestions();
