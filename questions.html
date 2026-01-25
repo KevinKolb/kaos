@@ -127,7 +127,6 @@
         .question {
             font-family: 'Arial Black', sans-serif;
             font-weight: 900;
-            font-size: 10vw;
             text-transform: uppercase;
             color: #fff;
             text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
@@ -136,8 +135,13 @@
             transition: opacity 0.5s ease, transform 0.5s ease;
             position: absolute;
             text-align: center;
-            padding: 5%;
+            padding: 5vw;
             line-height: 1.2;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .question.active {
@@ -243,6 +247,34 @@
         let currentIndex = Math.floor(Math.random() * questions.length);
         let questionCount = 0;
         let interval;
+
+        // Calculate optimal font size to fit text within viewport
+        function fitTextToScreen(element) {
+            const maxWidth = window.innerWidth * 0.9;
+            const maxHeight = window.innerHeight * 0.9;
+            let fontSize = Math.min(window.innerWidth, window.innerHeight) * 0.15;
+
+            element.style.fontSize = fontSize + 'px';
+
+            while ((element.scrollWidth > maxWidth || element.scrollHeight > maxHeight) && fontSize > 10) {
+                fontSize -= 2;
+                element.style.fontSize = fontSize + 'px';
+            }
+        }
+
+        // Fit all questions on load and resize
+        function fitAllQuestions() {
+            questions.forEach(q => {
+                q.style.opacity = '0';
+                q.style.display = 'flex';
+                fitTextToScreen(q);
+                q.style.display = '';
+                q.style.opacity = '';
+            });
+        }
+
+        fitAllQuestions();
+        window.addEventListener('resize', fitAllQuestions);
 
         function showQuestion(index) {
             questions.forEach((q, i) => {
