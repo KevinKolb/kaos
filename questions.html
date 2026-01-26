@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❓</text></svg>">
     <title>Questions MAGA Hate Ball</title>
     <style>
         * {
@@ -27,8 +28,95 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, #000 0%, #0a0a0f 50%, #000 100%);
+            background: #000;
             z-index: 0;
+        }
+
+        /* Swirling galaxy */
+        .galaxy {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 200vmax;
+            height: 200vmax;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            animation: galaxy-rotate 180s linear infinite;
+        }
+
+        .galaxy-arm {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+        }
+
+        .galaxy-arm::before,
+        .galaxy-arm::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+        }
+
+        .galaxy-arm-1::before {
+            width: 80%;
+            height: 80%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            background:
+                radial-gradient(ellipse 80% 15% at 70% 50%, rgba(100, 80, 150, 0.4) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 10% at 75% 48%, rgba(150, 120, 200, 0.25) 0%, transparent 60%);
+            filter: blur(15px);
+        }
+
+        .galaxy-arm-1::after {
+            width: 75%;
+            height: 75%;
+            transform: translate(-50%, -50%) rotate(180deg);
+            background:
+                radial-gradient(ellipse 80% 15% at 70% 50%, rgba(80, 100, 160, 0.35) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 8% at 72% 52%, rgba(120, 140, 200, 0.2) 0%, transparent 60%);
+            filter: blur(18px);
+        }
+
+        .galaxy-arm-2::before {
+            width: 85%;
+            height: 85%;
+            transform: translate(-50%, -50%) rotate(90deg);
+            background:
+                radial-gradient(ellipse 75% 12% at 68% 50%, rgba(120, 90, 170, 0.35) 0%, transparent 65%),
+                radial-gradient(ellipse 55% 8% at 73% 49%, rgba(160, 130, 210, 0.2) 0%, transparent 55%);
+            filter: blur(16px);
+        }
+
+        .galaxy-arm-2::after {
+            width: 78%;
+            height: 78%;
+            transform: translate(-50%, -50%) rotate(270deg);
+            background:
+                radial-gradient(ellipse 70% 12% at 65% 51%, rgba(90, 110, 170, 0.3) 0%, transparent 65%),
+                radial-gradient(ellipse 45% 7% at 70% 50%, rgba(130, 150, 220, 0.18) 0%, transparent 55%);
+            filter: blur(20px);
+        }
+
+        .galaxy-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 15%;
+            height: 15%;
+            transform: translate(-50%, -50%);
+            background:
+                radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(200, 180, 255, 0.18) 20%, rgba(150, 130, 200, 0.1) 40%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(8px);
+        }
+
+        @keyframes galaxy-rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         .stars {
@@ -37,14 +125,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
+            z-index: 2;
         }
 
         .star {
             position: absolute;
-            background: white;
             border-radius: 50%;
-            box-shadow: 0 0 3px white;
+            background: #fff;
+            box-shadow: 0 0 3px rgba(255,255,255,0.8);
         }
 
         .star.twinkle-1 { animation: twinkle1 2s infinite ease-in-out; }
@@ -52,64 +140,21 @@
         .star.twinkle-3 { animation: twinkle3 4s infinite ease-in-out; }
 
         @keyframes twinkle1 {
-            0%, 100% { opacity: 0.1; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.5); }
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
 
         @keyframes twinkle2 {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            30% { opacity: 1; transform: scale(1.3); }
-            70% { opacity: 0.5; transform: scale(1); }
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            30% { opacity: 1; transform: scale(1.15); }
+            70% { opacity: 0.6; transform: scale(1); }
         }
 
         @keyframes twinkle3 {
-            0%, 100% { opacity: 0.2; }
+            0%, 100% { opacity: 0.3; }
             40% { opacity: 0.8; }
             60% { opacity: 1; }
-            80% { opacity: 0.4; }
-        }
-
-        .clouds {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-        }
-
-        .cloud {
-            position: absolute;
-            background: radial-gradient(ellipse, rgba(30, 30, 35, 0.8) 0%, transparent 70%);
-            border-radius: 50%;
-            filter: blur(30px);
-        }
-
-        .cloud-layer-1 {
-            animation: drift-1 25s infinite ease-in-out alternate;
-        }
-
-        .cloud-layer-2 {
-            animation: drift-2 30s infinite ease-in-out alternate;
-        }
-
-        .cloud-layer-3 {
-            animation: drift-3 20s infinite ease-in-out alternate;
-        }
-
-        @keyframes drift-1 {
-            0% { transform: translateX(0) translateY(0); opacity: 0.6; }
-            100% { transform: translateX(50px) translateY(20px); opacity: 0.8; }
-        }
-
-        @keyframes drift-2 {
-            0% { transform: translateX(0) translateY(0); opacity: 0.5; }
-            100% { transform: translateX(-40px) translateY(30px); opacity: 0.7; }
-        }
-
-        @keyframes drift-3 {
-            0% { transform: translateX(0) translateY(0); opacity: 0.7; }
-            100% { transform: translateX(30px) translateY(-20px); opacity: 0.5; }
+            80% { opacity: 0.5; }
         }
 
         .question-container {
@@ -127,17 +172,23 @@
         .question {
             font-family: 'Arial Black', sans-serif;
             font-weight: 900;
-            font-size: 10vw;
             text-transform: uppercase;
             color: #fff;
-            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+            text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.9);
             opacity: 0;
             transform: scale(0.95);
             transition: opacity 0.5s ease, transform 0.5s ease;
             position: absolute;
             text-align: center;
-            padding: 5%;
-            line-height: 1.2;
+            padding: 2vw;
+            line-height: 1.05;
+            width: 96vw;
+            max-height: 94vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .question.active {
@@ -155,96 +206,154 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 500px;
-            height: 500px;
+            width: 600px;
+            height: 600px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(60, 60, 80, 0.15) 0%, transparent 70%);
+            background: 
+                radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 30% 40%, rgba(200, 50, 70, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(50, 100, 200, 0.15) 0%, transparent 50%);
             z-index: 4;
-            animation: pulse-glow 4s infinite ease-in-out;
+            animation: pulse-glow 5s infinite ease-in-out;
         }
 
         @keyframes pulse-glow {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; }
         }
     </style>
 </head>
 <body>
     <div class="sky-background"></div>
+    <div class="galaxy">
+        <div class="galaxy-arm galaxy-arm-1"></div>
+        <div class="galaxy-arm galaxy-arm-2"></div>
+        <div class="galaxy-core"></div>
+    </div>
     <div class="stars" id="stars"></div>
-    <div class="clouds" id="clouds"></div>
-    <div class="mystical-glow"></div>
 
-    <video id="signVideo" src="videos/KAOS_SIGN.mp4" autoplay muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 20;"></video>
+    <video id="signVideo" src="videos/ZOLTAR_ORANGE.mp4" autoplay muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 20;"></video>
 
     <div class="question-container">
-        <div class="question">Will you invade Greenland?</div>
-        <div class="question">Will you invade Canada?</div>
-        <div class="question">How many times did you go to the island?</div>
-        <div class="question">What's that thing on your hand?</div>
-        <div class="question">What's the deal with your ankles?</div>
-        <div class="question">Can you identify the giraffe?</div>
-        <div class="question">Who is going to run Venezuela?</div>
-        <div class="question">Where's Melania?</div>
-        <div class="question">When will food prices go down?</div>
-        <div class="question">What is the future of Gaza?</div>
-        <div class="question">Will there be a Trump Tower in Greenland?</div>
-        <div class="question">Will there be a Trump Tower in Gaza?</div>
-        <div class="question">Will there be a Trump Tower in Venezuela?</div>
-        <div class="question">What went on on the Island?</div>
-        <div class="question">What's the deal with you and Putin?</div>
-        <div class="question">Was it an MRI or a CT Scan?</div>
-        <div class="question">Kiss your daughter with that mouth?</div>
-        <div class="question">When is Eric's birthday?</div>
-        <div class="question">Are we Great Again yet?</div>
+        <div class="question">Should I invade Greenland?</div>
+        <div class="question">Will I invade Canada?</div>
+        <div class="question">Did I leave anything on the Island?</div>
+        <div class="question">Should I drink bleach for this thing on my hand?</div>
+        <div class="question">Are my ankles normal size?</div>
+        <div class="question">Are my hands smaller than Gavin's?</div>
+        <div class="question">Is that a giraffe on this test?</div>
+        <div class="question">Should I make Eric the President of Venezuela?</div>
+        <div class="question">Can I deport Melania?</div>
+        <div class="question">Are groceries food?</div>
+        <div class="question">Is Gaza in New Jersey?</div>
+        <div class="question">Is Greenland a made up name?</div>
+        <div class="question">Should I put a Trump Tower in Gaza?</div>
+        <div class="question">Should I put a Trump Tower in Venezuela?</div>
+        <div class="question">Am I due in court today?</div>
+        <div class="question">Should I send Vladimir a heart emoji?</div>
+        <div class="question">Are an MRI and a CT Scan the same thing?</div>
+        <div class="question">Does Ivanka enjoy kissing me on the lips?</div>
+        <div class="question">Should I bury my ex-wife in the backyard?</div>
+        <div class="question">Is America Great Again yet?</div>
     </div>
 
     <script>
         // Generate stars
         const starsContainer = document.getElementById('stars');
         const twinkleClasses = ['twinkle-1', 'twinkle-2', 'twinkle-3'];
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 200; i++) {
             const star = document.createElement('div');
             star.className = 'star ' + twinkleClasses[Math.floor(Math.random() * 3)];
             star.style.left = Math.random() * 100 + '%';
             star.style.top = Math.random() * 100 + '%';
-            const size = Math.random() * 3 + 1;
+            const size = Math.random() * 2.5 + 0.5;
             star.style.width = size + 'px';
             star.style.height = size + 'px';
             star.style.animationDelay = Math.random() * 5 + 's';
             starsContainer.appendChild(star);
         }
 
-        // Generate clouds
-        const cloudsContainer = document.getElementById('clouds');
-        const cloudLayers = ['cloud-layer-1', 'cloud-layer-2', 'cloud-layer-3'];
-        for (let i = 0; i < 15; i++) {
-            const cloud = document.createElement('div');
-            cloud.className = 'cloud ' + cloudLayers[i % 3];
-            cloud.style.left = (Math.random() * 120 - 10) + '%';
-            cloud.style.top = (Math.random() * 120 - 10) + '%';
-            const size = Math.random() * 400 + 200;
-            cloud.style.width = size + 'px';
-            cloud.style.height = (size * 0.6) + 'px';
-            cloud.style.animationDelay = Math.random() * 10 + 's';
-            cloudsContainer.appendChild(cloud);
-        }
-
-        // Video list - add your video filenames here
-        const videos = [
-            'KAOS_SIGN.mp4',
-            'MAGA_HATE_BALL.mp4',
-            'ZOLTAR.mp4'
+        // Video sequence (after intro KAOS_SIGN, cycle through these)
+        const videoSequence = [
+            'ZOLTAR_ORANGE.mp4',
+            'ZOLTAR_ORANGE_2.mp4'
         ];
+        let videoIndex = 0;
 
         // Question rotation
         const questions = document.querySelectorAll('.question');
         const video = document.getElementById('signVideo');
-        let currentIndex = Math.floor(Math.random() * questions.length);
-        let questionCount = 0;
-        let interval;
+        let currentIndex = 0;
+        let isVideoPlaying = true; // Start true since intro video plays first
+
+        // Shuffle queue - show each question once before reshuffling
+        let questionQueue = [];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function refillQueue() {
+            questionQueue = shuffleArray([...Array(questions.length).keys()]);
+            // Avoid showing same question twice in a row when reshuffling
+            if (questionQueue[0] === currentIndex && questionQueue.length > 1) {
+                questionQueue.push(questionQueue.shift());
+            }
+        }
+
+        refillQueue();
+
+        // Calculate optimal font size based on text length and viewport
+        function fitTextToScreen(element) {
+            const text = element.textContent;
+            const charCount = text.length;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            // Use width as primary constraint since text wraps
+            // Calculate how many chars fit per line at a given size
+            // Aim to fill screen with 1-3 lines
+
+            let fontSize;
+            if (charCount <= 15) {
+                fontSize = vw * 0.18;   // Very short - 1 line huge
+            } else if (charCount <= 25) {
+                fontSize = vw * 0.12;   // Short - 1-2 lines
+            } else if (charCount <= 35) {
+                fontSize = vw * 0.09;   // Medium - 2 lines
+            } else if (charCount <= 50) {
+                fontSize = vw * 0.07;   // Long - 2-3 lines
+            } else {
+                fontSize = vw * 0.055;  // Very long - 3+ lines
+            }
+
+            // Cap at viewport height consideration
+            const maxByHeight = vh * 0.25;
+            fontSize = Math.min(fontSize, maxByHeight);
+
+            element.style.fontSize = fontSize + 'px';
+        }
+
+        // Fit all questions on load and resize
+        function fitAllQuestions() {
+            questions.forEach(q => fitTextToScreen(q));
+        }
+
+        fitAllQuestions();
+        window.addEventListener('resize', fitAllQuestions);
+
+        function hideAllQuestions() {
+            questions.forEach(q => {
+                q.classList.remove('active', 'fade-out');
+            });
+        }
 
         function showQuestion(index) {
+            if (isVideoPlaying) return; // Don't show questions during video
             questions.forEach((q, i) => {
                 q.classList.remove('active', 'fade-out');
                 if (i === index) {
@@ -254,59 +363,64 @@
         }
 
         function showVideo() {
-            clearInterval(interval);
+            isVideoPlaying = true;
             questions[currentIndex].classList.remove('active');
             questions[currentIndex].classList.add('fade-out');
 
             setTimeout(() => {
-                const randomVideo = videos[Math.floor(Math.random() * videos.length)];
-                video.src = 'videos/' + randomVideo;
+                hideAllQuestions(); // Ensure all questions are hidden
+                const nextVideo = videoSequence[videoIndex];
+                videoIndex = (videoIndex + 1) % videoSequence.length;
+                video.src = 'videos/' + nextVideo;
                 video.style.display = 'block';
                 video.currentTime = 0;
                 video.play().catch(e => {
                     console.log('Video play failed:', e);
                     video.style.display = 'none';
+                    isVideoPlaying = false;
                     nextQuestion();
-                    interval = setInterval(nextStep, 8000);
                 });
             }, 500);
         }
 
 
         function nextQuestion() {
-            let newIndex;
-            do {
-                newIndex = Math.floor(Math.random() * questions.length);
-            } while (newIndex === currentIndex && questions.length > 1);
-            currentIndex = newIndex;
+            if (questionQueue.length === 0) {
+                refillQueue();
+            }
+            currentIndex = questionQueue.shift();
             showQuestion(currentIndex);
         }
 
         function nextStep() {
-            questionCount++;
-
-            if (questionCount % 3 === 0) {
+            // After each question, show the next video (unless videos are disabled)
+            if (!videosDisabled) {
                 showVideo();
-            } else {
-                questions[currentIndex].classList.remove('active');
-                questions[currentIndex].classList.add('fade-out');
-                setTimeout(nextQuestion, 500);
             }
         }
 
-        // After video ends, start/continue questions
+        // After video ends, show next question and stick
         video.addEventListener('ended', function() {
             video.style.display = 'none';
-            if (questionCount === 0) {
-                // First time - after intro video
-                showQuestion(currentIndex);
-                questionCount = 1;
-                interval = setInterval(nextStep, 8000);
-            } else {
-                // After regular video breaks
+            isVideoPlaying = false;
+            nextQuestion();
+            // Stick on question - no auto-advance
+        });
+
+        // Track if videos work (they won't on file:// protocol)
+        let videosDisabled = false;
+
+        // Handle video load errors (common when running locally without server)
+        video.addEventListener('error', function() {
+            console.log('Video failed to load - running in local mode without videos');
+            videosDisabled = true;
+            video.style.display = 'none';
+            isVideoPlaying = false;
+            showQuestion(currentIndex);
+            // Just cycle questions without videos
+            setInterval(() => {
                 nextQuestion();
-                interval = setInterval(nextStep, 8000);
-            }
+            }, 8000);
         });
 
         // Try to play video on load
@@ -314,9 +428,9 @@
             console.log('Autoplay blocked:', e);
             // If autoplay fails, skip to questions
             video.style.display = 'none';
+            isVideoPlaying = false;
             showQuestion(currentIndex);
-            questionCount = 1;
-            interval = setInterval(nextStep, 8000);
+            setTimeout(nextStep, 8000);
         });
 
         // Unmute on first click anywhere
