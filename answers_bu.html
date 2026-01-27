@@ -1,0 +1,377 @@
+<html>
+<head>
+<link rel="icon" href="8ball.svg" type="image/svg+xml">
+<title>Answers MAGA Hate Ball</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #4662bd;
+  overflow: hidden;
+  font-family: "Courier New", Courier, "Lucida Console", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#text-container {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background: #4662bd;
+}
+
+#zoom-text {
+  position: absolute;
+  z-index: 1;
+  color: white;
+  font-size: 34vmin;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  word-spacing: -0.2em;
+  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  width: 90%;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-shadow:
+    0 1px 0 rgba(150, 180, 255, 0.4),
+    0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 3px 3px rgba(0, 0, 0, 0.7),
+    0 6px 6px rgba(0, 0, 0, 0.5),
+    0 10px 10px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(100, 150, 255, 0.5);
+  filter: blur(20px);
+  opacity: 0;
+  transition: filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out;
+}
+
+.word {
+  display: block;
+  white-space: nowrap;
+}
+
+#measure {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  visibility: hidden;
+  white-space: nowrap;
+  font-family: "Courier New", Courier, "Lucida Console", monospace;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  word-spacing: -0.2em;
+  text-transform: uppercase;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -20px;
+  --drift-start: 0px;
+  --drift-end: 0px;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(150, 180, 255, 0.7), rgba(100, 140, 220, 0.15) 30%, rgba(60, 100, 180, 0.12) 45%, rgba(30, 60, 120, 0.08) 70%, rgba(15, 30, 60, 0) 90%),
+    radial-gradient(circle at 70% 75%, rgba(80, 120, 200, 0.3), rgba(30, 50, 100, 0.1) 55%, rgba(15, 25, 50, 0) 85%);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 6px rgba(150, 180, 255, 0.35),
+    inset 0 0 18px rgba(60, 100, 180, 0.2),
+    0 2px 8px rgba(10, 20, 40, 0.4);
+  mix-blend-mode: screen;
+  filter: saturate(1.2);
+  animation: rise linear infinite;
+  pointer-events: none;
+}
+
+.bubble.front {
+  z-index: 10;
+}
+
+.bubble.back {
+  z-index: -1;
+}
+
+@keyframes rise {
+  0% {
+    transform: translate(var(--drift-start), 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(var(--drift-end), -100vh) scale(0.55);
+    opacity: 0;
+  }
+}
+
+@keyframes riseMeander {
+  0% {
+    transform: translate(var(--drift-start), 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(calc(var(--drift-start) + var(--meander-amt)), -50vh) scale(0.75);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(var(--drift-end), -100vh) scale(0.55);
+    opacity: 0;
+  }
+}
+</style>
+</head>
+<body>
+<div id="text-container">
+  <div id="zoom-text"></div>
+</div>
+<script>
+  // DISPLAY MODE: "length" (longest to shortest), "random", or "weighted" (by rating)
+  // Override via URL: ?mode=l (length) or ?mode=w (weighted), default is random
+  const urlParams = new URLSearchParams(window.location.search);
+  const modeParam = urlParams.get('mode');
+  const DISPLAY_MODE = modeParam === 'l' ? 'length' : modeParam === 'w' ? 'weighted' : 'random';
+
+  // Each text has a rating 1-5 (higher = shown more frequently)
+  const textsWithRatings = [
+    { text: "JUST YELL \"THEY'RE EATING THE DOGS!\"", rating: 3 },
+    { text: "NO, QUIET PIGGY", rating: 3 },
+    { text: "COVFEFE", rating: 4 },
+    { text: "BIGLY", rating: 4 },
+    { text: "MANY PEOPLE ARE SAYING YES", rating: 5 },
+    { text: "MANY PEOPLE ARE SAYING NO", rating: 5 },
+    { text: "NO, FAKE NEWS", rating: 5 },
+    { text: "NO, SAD!", rating: 4 },
+    { text: "TELL THEM TO DRINK BLEACH", rating: 3 },
+    { text: "EVERYONE AGREES", rating: 3 },
+    { text: "WITCH HUNT", rating: 4 },
+    { text: "NO, WE NEVER MET", rating: 3 },
+    { text: "DO MORE TARIFFS AND ASK AGAIN", rating: 3 },
+    { text: "IT'S A SCAM, ASK AGAIN LATER", rating: 4 },
+    { text: "UNKNOWN, JUST CALL THEM LOSERS", rating: 3 },
+    { text: "IT'S RIGGED", rating: 5 },
+    { text: "IT'S A HOAX", rating: 4 },
+    { text: "WHAT A STUPID QUESTION, YES", rating: 4 },
+    { text: "THE FAILING NEW YORK TIMES WOULD SAY YES", rating: 2 },
+    { text: "NO, CALL HIM A THIRD-RATE REPORTER WHO IS UGLY", rating: 2 },
+    { text: "JUST SAY, \"RUSSIA RUSSIA RUSSIA\"", rating: 5 },
+    { text: "YES, DRILL BABY DRILL", rating: 4 },
+    { text: "NO, THANK YOU FOR YOUR ATTENTION IN THIS MATTER", rating: 1 },
+    { text: "JUST SAY \"GROCERIES\"", rating: 3 },
+    { text: "NO COLLUSION", rating: 4 },
+  ];
+
+  // Extract just text strings for backwards compatibility
+  const texts = textsWithRatings.map(t => t.text);
+
+  const zoomText = document.getElementById("zoom-text");
+  const textContainer = document.getElementById("text-container");
+  const measure = document.createElement("div");
+  measure.id = "measure";
+  document.body.appendChild(measure);
+
+  // Create bubbles
+  function createBubble() {
+    const bubbleCount = Math.random() < 0.5 ? 4 : 2;
+    for (let i = 0; i < bubbleCount; i++) {
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.style.left = Math.random() * 100 + "%";
+      const rand = Math.random();
+      const size = rand < 0.02
+        ? Math.random() * 300 + 500  // 2% chance: gigantic bubbles (500-800px)
+        : rand < 0.08
+        ? Math.random() * 200 + 250  // 6% chance: huge bubbles (250-450px)
+        : rand < 0.25
+        ? Math.random() * 150 + 80   // 17% chance: large bubbles (80-230px)
+        : Math.random() * 30 + 8;    // 75% chance: small bubbles (8-38px)
+      bubble.style.width = bubble.style.height = size + "px";
+      bubble.style.bottom = (-size - 20) + "px";  // Start fully off screen
+      // Predetermine layer: 20% in front, 80% behind
+      bubble.classList.add(Math.random() < 0.2 ? 'front' : 'back');
+      // More varied speeds: 3-18 seconds
+      bubble.style.animationDuration = (Math.random() * 15 + 3) + "s";
+      bubble.style.animationDelay = (Math.random() * 1.2) + "s";
+      bubble.style.setProperty("--drift-start", (Math.random() * 14 - 7) + "px");
+      bubble.style.setProperty("--drift-end", (Math.random() * 20 - 10) + "px");
+      // 30% chance to meander
+      if (Math.random() < 0.3) {
+        bubble.style.setProperty("--meander-amt", (Math.random() * 40 + 20) + "px");
+        bubble.style.animationName = "riseMeander";
+      }
+      textContainer.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 14000);
+    }
+  }
+  setInterval(createBubble, 600);
+
+  // Sort texts by length (longest first) for length mode
+  const textsByLength = [...texts].sort((a, b) => b.length - a.length);
+  let lengthIndex = 0;
+  let lastText = '';
+
+  // Build weighted pool for weighted mode
+  const weightedPool = [];
+  textsWithRatings.forEach(item => {
+    for (let i = 0; i < item.rating; i++) {
+      weightedPool.push(item.text);
+    }
+  });
+
+  function getNextText() {
+    if (DISPLAY_MODE === "length") {
+      const text = textsByLength[lengthIndex];
+      lengthIndex = (lengthIndex + 1) % textsByLength.length;
+      return text;
+    } else if (DISPLAY_MODE === "weighted") {
+      // Weighted random mode - higher ratings appear more often
+      let text;
+      do {
+        text = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      } while (text === lastText && texts.length > 1);
+      lastText = text;
+      return text;
+    } else {
+      // Random mode (equal probability)
+      let text;
+      do {
+        text = texts[Math.floor(Math.random() * texts.length)];
+      } while (text === lastText && texts.length > 1);
+      lastText = text;
+      return text;
+    }
+  }
+
+  function getAvailableWidth() {
+    return (textContainer.clientWidth || window.innerWidth) * 0.88;
+  }
+
+  function getAvailableHeight() {
+    return (textContainer.clientHeight || window.innerHeight) * 0.85;
+  }
+
+  function measureWord(word, size) {
+    measure.style.fontSize = size + "vmin";
+    measure.textContent = word;
+    return measure.getBoundingClientRect().width;
+  }
+
+  function measureLineHeight(size) {
+    measure.style.fontSize = size + "vmin";
+    measure.textContent = "X";
+    return measure.getBoundingClientRect().height * 1.1; // line-height factor
+  }
+
+  function getTextStyle(text, lines) {
+    const words = text.split(" ");
+    const lineCount = lines.length;
+    const availableWidth = getAvailableWidth();
+    const availableHeight = getAvailableHeight();
+
+    // Start with a large size and shrink to fit
+    let size = 60;
+
+    // Find the widest line
+    const getWidestLine = (s) => Math.max(...lines.map(line => measureWord(line, s)));
+
+    // Shrink to fit width
+    let widest = getWidestLine(size);
+    while (widest > availableWidth && size > 4) {
+      size -= 1;
+      widest = getWidestLine(size);
+    }
+
+    // Shrink to fit height
+    let totalHeight = measureLineHeight(size) * lineCount;
+    while (totalHeight > availableHeight && size > 4) {
+      size -= 1;
+      totalHeight = measureLineHeight(size) * lineCount;
+    }
+
+    return { size: size + "vmin" };
+  }
+
+  // Group words into lines - max 2 words per line
+  function groupWordsIntoLines(words) {
+    // 2-word texts: one word per line
+    if (words.length === 2) {
+      return words;
+    }
+
+    // 3-word texts: one word per line
+    if (words.length === 3) {
+      return words;
+    }
+
+    // 4-word texts: 3 lines (1-2-1 pattern)
+    if (words.length === 4) {
+      return [words[0], words[1] + " " + words[2], words[3]];
+    }
+
+    const lines = [];
+    for (let i = 0; i < words.length; i += 2) {
+      if (i + 1 < words.length) {
+        lines.push(words[i] + " " + words[i + 1]);
+      } else {
+        lines.push(words[i]);
+      }
+    }
+    return lines;
+  }
+
+  function showText() {
+    // Reset animation state
+    zoomText.style.transition = "none";
+    zoomText.style.filter = "blur(20px)";
+    zoomText.style.opacity = "0";
+    zoomText.style.transform = "translate(-50%, -50%) scale(0.6) rotate(-8deg)";
+
+    // Set text with dynamic font size
+    const text = getNextText();
+    const words = text.split(" ");
+    const lines = groupWordsIntoLines(words);
+    const style = getTextStyle(text, lines);
+    zoomText.innerHTML = "";
+    lines.forEach(line => {
+      const span = document.createElement("span");
+      span.className = "word";
+      span.textContent = line;
+      zoomText.appendChild(span);
+    });
+    zoomText.style.fontSize = style.size;
+
+    // Animate in
+    zoomText.style.transition = "filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out";
+    zoomText.style.filter = "blur(0)";
+    zoomText.style.opacity = "1";
+    zoomText.style.transform = "translate(-50%, -50%) scale(1) rotate(0deg)";
+
+    // Outro: shrink/fade faster than intro
+    setTimeout(() => {
+      const exitRotate = (Math.random() * 30 - 15); // Random -15 to 15 degrees
+      zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
+      zoomText.style.filter = "blur(18px)";
+      zoomText.style.opacity = "0";
+      zoomText.style.transform = `translate(-50%, -50%) scale(0.35) rotate(${exitRotate}deg)`;
+    }, 8000);
+
+    // Change text after float back
+    setTimeout(showText, 9800);
+  }
+
+  showText();
+</script>
+</body>
+</html>

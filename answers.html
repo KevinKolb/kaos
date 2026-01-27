@@ -1,6 +1,6 @@
 <html>
 <head>
-<link rel="icon" href="8ball.svg" type="image/svg+xml">
+<link rel="icon" href="8ball.svg" type="image/svg+xml" onerror="this.style.display='none'">
 <title>Answers MAGA Hate Ball</title>
 <style>
 html, body {
@@ -29,23 +29,17 @@ html, body {
 
 #zoom-text {
   position: absolute;
-  z-index: 1;
   color: white;
-  font-size: 34vmin;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  word-spacing: -0.2em;
   text-align: center;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.6);
-  width: 90%;
-  height: 90%;
+  transform: translate(-50%, 0);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100vh;
   text-shadow:
     0 1px 0 rgba(150, 180, 255, 0.4),
     0 -1px 2px rgba(0, 0, 0, 0.6),
@@ -58,9 +52,15 @@ html, body {
   transition: filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out;
 }
 
+/* Line breaks defined per answer using | delimiter */
 .word {
   display: block;
   white-space: nowrap;
+}
+
+.word.wrap {
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 #measure {
@@ -138,43 +138,43 @@ html, body {
   <div id="zoom-text"></div>
 </div>
 <script>
-  // DISPLAY MODE: "length" (longest to shortest), "random", or "weighted" (by rating)
-  // Override via URL: ?mode=l (length) or ?mode=w (weighted), default is random
+  // DISPLAY MODE: ?mode=s (shortest first), default is random
   const urlParams = new URLSearchParams(window.location.search);
   const modeParam = urlParams.get('mode');
-  const DISPLAY_MODE = modeParam === 'l' ? 'length' : modeParam === 'w' ? 'weighted' : 'random';
+  const DISPLAY_MODE = modeParam === 's' ? 'shortest' : 'random';
 
   // Each text has a rating 1-5 (higher = shown more frequently)
+  // align: "center" (cheat up) or "center" (dead center)
+  // fontSize: null = auto-calculate, or set specific value like "30vmin"
   const textsWithRatings = [
-    { text: "JUST YELL \"THEY'RE EATING THE DOGS!\"", rating: 3 },
-    { text: "QUIET PIGGY", rating: 3 },
-    { text: "COVFEFE", rating: 4 },
-    { text: "BIGLY", rating: 4 },
-    { text: "MANY PEOPLE ARE SAYING YES", rating: 5 },
-    { text: "MANY PEOPLE ARE SAYING NO", rating: 5 },
-    { text: "FAKE NEWS", rating: 5 },
-    { text: "SAD!", rating: 4 },
-    { text: "TELL THEM TO DRINK BLEACH", rating: 3 },
-    { text: "EVERYONE AGREES", rating: 3 },
-    { text: "WITCH HUNT", rating: 4 },
-    { text: "WE NEVER MET", rating: 3 },
-    { text: "DO MORE TARIFFS", rating: 3 },
-    { text: "IT'S A SCAM", rating: 4 },
-    { text: "UNKNOWN, JUST CALL THEM LOSERS", rating: 3 },
-    { text: "IT'S RIGGED", rating: 5 },
-    { text: "IT'S A HOAX", rating: 4 },
-    { text: "WHAT A STUPID QUESTION", rating: 4 },
-    { text: "THE FAILING NEW YORK TIMES WOULD SAY YES", rating: 2 },
-    { text: "CALL HIM A THIRD-RATE REPORTER WHO IS UGLY", rating: 2 },
-    { text: "RUSSIA RUSSIA RUSSIA", rating: 5 },
-    { text: "DRILL BABY DRILL", rating: 4 },
-    { text: "NO, THANK YOU FOR YOUR ATTENTION IN THIS MATTER", rating: 1 },
-    { text: "JUST SAY GROCERIES", rating: 3 },
-    { text: "NO COLLUSION", rating: 4 },
+    { text: "BIGLY", align: "center" },                                            // 5
+    { text: "COVFEFE", align: "center" },                                          // 7
+    { text: "GROCERIES", align: "center" },                                        // 9
+    { text: "WITCH|HUNT", align: "center" },                                       // 10
+    { text: "IT'S|RIGGED", align: "center" },                                      // 11
+    { text: "IT'S A|HOAX", align: "center" },                                      // 11
+    { text: "NO.|IT'S FAKE|NEWS", align: "center" },                                     // 13
+    { text: "THERE'S NO|COLLUSION", align: "center" },                                     // 13
+    { text: "NO.|QUIET|PIGGY", align: "center" },                                   // 15
+    { text: "EVERYONE|AGREES", align: "center" },                                  // 15
+    { text: "NO.|SAD!", align: "center" },                                          // 18
+    { text: "YES.|DRILL BABY|DRILL", align: "center" },                             // 21
+    { text: "MANY PEOPLE|ARE SAYING|NO", align: "center" },                        // 25
+    { text: "UNKNOWN.|JUST YELL|LOSERS", align: "center" },                         // 25
+    { text: "MANY PEOPLE|ARE SAYING|YES", align: "center" },                       // 26
+    { text: "YES.|IT'S GONNA BE|HUGE", align: "center" },                           // 26
+    { text: "IT'S A|SCAM", align: "center" },                      // 27
+    { text: "WHAT A|STUPID|QUESTION.|YES", align: "center" },                       // 27
+    { text: "ASK AGAIN LATER DO MORE TARIFFS", align: "center" },                  // 29
+    { text: "JUST SAY|RUSSIA|RUSSIA|RUSSIA", align: "center" },                    // 29
+    { text: "YES. TELL PEOPLE TO|DRINK BLEACH", align: "center" },                  // 32
+    { text: "THEY'RE EATING|THE DOGS!", align: "center" },               // 34
+    { text: "THE FAILING|NEW YORK TIMES|SAYS YES", align: "center" },              // 40
+    { text: "THANK YOU FOR|YOUR ATTENTION|IN THIS MATTER.|NO", align: "center" },   // 47
   ];
 
-  // Extract just text strings for backwards compatibility
   const texts = textsWithRatings.map(t => t.text);
+  const textsByShortest = [...textsWithRatings].sort((a, b) => a.text.length - b.text.length);
 
   const zoomText = document.getElementById("zoom-text");
   const textContainer = document.getElementById("text-container");
@@ -182,31 +182,24 @@ html, body {
   measure.id = "measure";
   document.body.appendChild(measure);
 
-  // Create bubbles
   function createBubble() {
-    const bubbleCount = Math.random() < 0.5 ? 4 : 2;
-    for (let i = 0; i < bubbleCount; i++) {
+    const count = Math.random() < 0.5 ? 4 : 2;
+    for (let i = 0; i < count; i++) {
       const bubble = document.createElement("div");
       bubble.className = "bubble";
       bubble.style.left = Math.random() * 100 + "%";
       const rand = Math.random();
-      const size = rand < 0.02
-        ? Math.random() * 300 + 500  // 2% chance: gigantic bubbles (500-800px)
-        : rand < 0.08
-        ? Math.random() * 200 + 250  // 6% chance: huge bubbles (250-450px)
-        : rand < 0.25
-        ? Math.random() * 150 + 80   // 17% chance: large bubbles (80-230px)
-        : Math.random() * 30 + 8;    // 75% chance: small bubbles (8-38px)
+      const size = rand < 0.02 ? Math.random() * 300 + 500   // 2%: gigantic
+        : rand < 0.08 ? Math.random() * 200 + 250            // 6%: huge
+        : rand < 0.25 ? Math.random() * 150 + 80             // 17%: large
+        : Math.random() * 30 + 8;                            // 75%: small
       bubble.style.width = bubble.style.height = size + "px";
-      bubble.style.bottom = (-size - 20) + "px";  // Start fully off screen
-      // Predetermine layer: 20% in front, 80% behind
+      bubble.style.bottom = (-size - 20) + "px";
       bubble.classList.add(Math.random() < 0.2 ? 'front' : 'back');
-      // More varied speeds: 3-18 seconds
       bubble.style.animationDuration = (Math.random() * 15 + 3) + "s";
       bubble.style.animationDelay = (Math.random() * 1.2) + "s";
       bubble.style.setProperty("--drift-start", (Math.random() * 14 - 7) + "px");
       bubble.style.setProperty("--drift-end", (Math.random() * 20 - 10) + "px");
-      // 30% chance to meander
       if (Math.random() < 0.3) {
         bubble.style.setProperty("--meander-amt", (Math.random() * 40 + 20) + "px");
         bubble.style.animationName = "riseMeander";
@@ -217,49 +210,84 @@ html, body {
   }
   setInterval(createBubble, 600);
 
-  // Sort texts by length (longest first) for length mode
-  const textsByLength = [...texts].sort((a, b) => b.length - a.length);
-  let lengthIndex = 0;
+  let modeIndex = 0;
   let lastText = '';
+  let frozen = false;
+  let outroTimeout = null;
+  let nextTimeout = null;
+  let history = [];
+  let historyIndex = -1;
+  let reverseIndex = -1;
 
-  // Build weighted pool for weighted mode
-  const weightedPool = [];
-  textsWithRatings.forEach(item => {
-    for (let i = 0; i < item.rating; i++) {
-      weightedPool.push(item.text);
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      frozen = !frozen;
+      if (frozen) {
+        clearTimeout(outroTimeout);
+        clearTimeout(nextTimeout);
+        outroTimeout = null;
+        nextTimeout = null;
+      } else {
+        showText();
+      }
+    }
+    if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      clearTimeout(outroTimeout);
+      clearTimeout(nextTimeout);
+      outroTimeout = null;
+      nextTimeout = null;
+      frozen = false;
+      showText();
+    }
+    if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      clearTimeout(outroTimeout);
+      clearTimeout(nextTimeout);
+      outroTimeout = null;
+      nextTimeout = null;
+      frozen = false;
+      if (historyIndex > 0) {
+        historyIndex--;
+        showItem(history[historyIndex]);
+      } else {
+        // At first item, wrap to longest and go backward
+        if (reverseIndex === -1) {
+          reverseIndex = textsByShortest.length - 1; // start at longest
+        } else {
+          reverseIndex--;
+          if (reverseIndex < 0) reverseIndex = textsByShortest.length - 1;
+        }
+        showItem(textsByShortest[reverseIndex]);
+      }
     }
   });
 
-  function getNextText() {
-    if (DISPLAY_MODE === "length") {
-      const text = textsByLength[lengthIndex];
-      lengthIndex = (lengthIndex + 1) % textsByLength.length;
-      return text;
-    } else if (DISPLAY_MODE === "weighted") {
-      // Weighted random mode - higher ratings appear more often
-      let text;
-      do {
-        text = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-      } while (text === lastText && texts.length > 1);
-      lastText = text;
-      return text;
-    } else {
-      // Random mode (equal probability)
-      let text;
-      do {
-        text = texts[Math.floor(Math.random() * texts.length)];
-      } while (text === lastText && texts.length > 1);
-      lastText = text;
-      return text;
+  function getRandomFrom(pool) {
+    let item;
+    do {
+      item = pool[Math.floor(Math.random() * pool.length)];
+    } while (item.text === lastText && pool.length > 1);
+    lastText = item.text;
+    return item;
+  }
+
+  function getNextItem() {
+    if (DISPLAY_MODE === "shortest") {
+      const item = textsByShortest[modeIndex];
+      modeIndex = (modeIndex + 1) % textsByShortest.length;
+      return item;
     }
+    return getRandomFrom(textsWithRatings);
   }
 
   function getAvailableWidth() {
-    return (textContainer.clientWidth || window.innerWidth) * 0.88;
+    return (textContainer.clientWidth || window.innerWidth) * 0.95;
   }
 
   function getAvailableHeight() {
-    return (textContainer.clientHeight || window.innerHeight) * 0.85;
+    return (textContainer.clientHeight || window.innerHeight) * 0.95;
   }
 
   function measureWord(word, size) {
@@ -274,101 +302,120 @@ html, body {
     return measure.getBoundingClientRect().height * 1.1; // line-height factor
   }
 
-  function getTextStyle(text, lines) {
-    const words = text.split(" ");
-    const lineCount = lines.length;
+  function getTextStyle(lines, useWordWrap = false) {
     const availableWidth = getAvailableWidth();
     const availableHeight = getAvailableHeight();
 
-    // Start with a large size and shrink to fit
-    let size = 60;
+    if (useWordWrap) {
+      // For word wrap: size based on longest word and estimated lines
+      const words = lines[0].split(" ");
+      const getLongestWord = (s) => Math.max(...words.map(w => measureWord(w, s)));
 
-    // Find the widest line
+      let size = 120;
+      while (size > 4) {
+        const longestWordWidth = getLongestWord(size);
+        if (longestWordWidth > availableWidth) {
+          size--;
+          continue;
+        }
+        // Estimate lines needed at this size
+        const lineHeight = measureLineHeight(size);
+        const wordsPerLine = Math.floor(availableWidth / (longestWordWidth * 0.6)); // rough estimate
+        const estimatedLines = Math.ceil(words.length / Math.max(wordsPerLine, 1));
+        if (lineHeight * estimatedLines > availableHeight) {
+          size--;
+          continue;
+        }
+        break;
+      }
+      return { size: size + "vmin" };
+    }
+
+    // For one word per line
     const getWidestLine = (s) => Math.max(...lines.map(line => measureWord(line, s)));
-
-    // Shrink to fit width
-    let widest = getWidestLine(size);
-    while (widest > availableWidth && size > 4) {
-      size -= 1;
-      widest = getWidestLine(size);
+    let size = 120;
+    while (size > 4 && (getWidestLine(size) > availableWidth || measureLineHeight(size) * lines.length > availableHeight)) {
+      size--;
     }
-
-    // Shrink to fit height
-    let totalHeight = measureLineHeight(size) * lineCount;
-    while (totalHeight > availableHeight && size > 4) {
-      size -= 1;
-      totalHeight = measureLineHeight(size) * lineCount;
-    }
-
     return { size: size + "vmin" };
   }
 
-  // Group words into lines - max 2 words per line
-  function groupWordsIntoLines(words) {
-    // 2-word texts: one word per line
-    if (words.length === 2) {
-      return words;
-    }
-
-    // 3-word texts: one word per line
-    if (words.length === 3) {
-      return words;
-    }
-
-    // 4-word texts: 3 lines (1-2-1 pattern)
-    if (words.length === 4) {
-      return [words[0], words[1] + " " + words[2], words[3]];
-    }
+  function balanceLines(words, numLines) {
+    // Distribute words across lines to balance widths
+    if (numLines >= words.length) return words.map(w => [w]);
 
     const lines = [];
-    for (let i = 0; i < words.length; i += 2) {
-      if (i + 1 < words.length) {
-        lines.push(words[i] + " " + words[i + 1]);
-      } else {
-        lines.push(words[i]);
-      }
+    const wordsPerLine = words.length / numLines;
+    let currentIndex = 0;
+
+    for (let i = 0; i < numLines; i++) {
+      const targetEnd = Math.round((i + 1) * wordsPerLine);
+      const lineWords = words.slice(currentIndex, targetEnd);
+      lines.push(lineWords.join(" "));
+      currentIndex = targetEnd;
     }
     return lines;
   }
 
-  function showText() {
-    // Reset animation state
+  function findBestLineBreaks(words) {
+    // Try different line counts and find most balanced
+    const wordCount = words.length;
+    let bestLines = words; // default: one word per line
+    let bestVariance = Infinity;
+
+    // Try 2 to wordCount-1 lines
+    for (let numLines = 2; numLines < wordCount; numLines++) {
+      const lines = balanceLines(words, numLines);
+      const lengths = lines.map(l => l.length);
+      const avg = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+      const variance = lengths.reduce((sum, len) => sum + Math.pow(len - avg, 2), 0) / lengths.length;
+
+      if (variance < bestVariance) {
+        bestVariance = variance;
+        bestLines = lines;
+      }
+    }
+    return bestLines;
+  }
+
+  function showItem(item) {
+    const hasPipes = item.text.includes("|");
+    const lines = hasPipes ? item.text.split("|") : item.text.split(" ");
+    const useWordWrap = !hasPipes && lines.length >= 4;
+    const processedLines = useWordWrap ? findBestLineBreaks(lines) : lines;
+
     zoomText.style.transition = "none";
     zoomText.style.filter = "blur(20px)";
     zoomText.style.opacity = "0";
-    zoomText.style.transform = "translate(-50%, -50%) scale(0.6) rotate(-8deg)";
+    zoomText.style.transform = "translate(-50%, 0) scale(0.6) rotate(-8deg)";
 
-    // Set text with dynamic font size
-    const text = getNextText();
-    const words = text.split(" ");
-    const lines = groupWordsIntoLines(words);
-    const style = getTextStyle(text, lines);
-    zoomText.innerHTML = "";
-    lines.forEach(line => {
-      const span = document.createElement("span");
-      span.className = "word";
-      span.textContent = line;
-      zoomText.appendChild(span);
-    });
-    zoomText.style.fontSize = style.size;
+    zoomText.innerHTML = processedLines.map(line => `<span class="word">${line}</span>`).join("");
+    zoomText.style.fontSize = item.fontSize || getTextStyle(processedLines, false).size;
 
-    // Animate in
     zoomText.style.transition = "filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out";
     zoomText.style.filter = "blur(0)";
     zoomText.style.opacity = "1";
-    zoomText.style.transform = "translate(-50%, -50%) scale(1) rotate(0deg)";
+    zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
 
-    // Outro: shrink/fade faster than intro
-    setTimeout(() => {
-      const exitRotate = (Math.random() * 30 - 15); // Random -15 to 15 degrees
+    outroTimeout = setTimeout(() => {
+      const exitRotate = Math.random() * 30 - 15;
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
-      zoomText.style.transform = `translate(-50%, -50%) scale(0.35) rotate(${exitRotate}deg)`;
+      zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
     }, 8000);
 
-    // Change text after float back
-    setTimeout(showText, 9800);
+    nextTimeout = setTimeout(() => {
+      nextTimeout = null;
+      if (!frozen) showText();
+    }, 9800);
+  }
+
+  function showText() {
+    const item = getNextItem();
+    history.push(item);
+    historyIndex = history.length - 1;
+    showItem(item);
   }
 
   showText();
