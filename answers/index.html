@@ -1,6 +1,6 @@
 <html>
 <head>
-<link rel="icon" href="8ball.svg" type="image/svg+xml" onerror="this.style.display='none'">
+<link rel="icon" href="../8ball.svg" type="image/svg+xml" onerror="this.style.display='none'">
 <title>Answers MAGA Hate Ball</title>
 <style>
 html, body {
@@ -141,38 +141,30 @@ html, body {
   <div id="zoom-text"></div>
 </div>
 <script>
-  // DISPLAY MODE: sequential (in order) by default
+  // SEQUENTIAL MODE: cycle through unlocked answers only
+  const textsWithRatings = [
+    { text: "COVFEFE", align: "center" },                                          // C
+    { text: "WITCH|HUNT", align: "center" },                                       // D
+    { text: "IT'S|RIGGED", align: "center" },                                      // E
+    { text: "IT'S A|HOAX", align: "center" },                                      // F
+    { text: "NO.|IT'S FAKE|NEWS", align: "center" },                                // G
+    { text: "NO.|QUIET|PIGGY", align: "center" },                                   // I
+    { text: "NO.|SAD!", align: "center" },                                          // K
+    { text: "YES.|DRILL BABY|DRILL", align: "center" },                             // L
+    { text: "UNKNOWN.|JUST YELL|LOSERS", align: "center" },                         // N
+    { text: "ASK AGAIN LATER DO MORE TARIFFS", align: "center" },                  // S
+    { text: "JUST SAY|RUSSIA|RUSSIA|RUSSIA", align: "center" },                    // T
+    { text: "YES. TELL PEOPLE TO|DRINK BLEACH", align: "center" },                  // U
+  ];
+
   let answerIndex = 0;
 
-  // Each text has a rating 1-5 (higher = shown more frequently)
-  // align: "center" (cheat up) or "center" (dead center)
-  // fontSize: null = auto-calculate, or set specific value like "30vmin"
-  const textsWithRatings = [
-    { text: "IT'S A|SCAM", align: "center" },                                       // Q1: Is that a giraffe on this test?
-    { text: "BIGLY", align: "center" },                                            // 5
-    { text: "COVFEFE", align: "center" },                                          // 7
-    { text: "WITCH|HUNT", align: "center" },                                       // 10
-    { text: "IT'S|RIGGED", align: "center" },                                      // 11
-    { text: "IT'S A|HOAX", align: "center" },                                      // 11
-    { text: "NO.|IT'S FAKE|NEWS", align: "center" },                                     // 13
-    { text: "MANY PEOPLE|ARE SAYING|NO", align: "center" },                        // Q8: Are my ankles normal size?
-    { text: "NO.|QUIET|PIGGY", align: "center" },                                   // 15
-    { text: "EVERYONE|AGREES", align: "center" },                                  // 15
-    { text: "NO.|SAD!", align: "center" },                                          // 18
-    { text: "YES.|DRILL BABY|DRILL", align: "center" },                             // 21
-    { text: "THERE'S NO|COLLUSION", align: "center" },                             // Q13
-    { text: "UNKNOWN.|JUST YELL|LOSERS", align: "center" },                         // 25
-    { text: "YES.|IT'S GONNA BE|HUGE", align: "center" },                           // Q15
-    { text: "MANY PEOPLE|ARE SAYING|YES", align: "center" },                       // Q16: Are groceries food?
-    { text: "GROCERIES", align: "center" },                                        // Q17
-    { text: "WHAT A|STUPID|QUESTION.|YES", align: "center" },                       // 27
-    { text: "ASK AGAIN LATER DO MORE TARIFFS", align: "center" },                  // 29
-    { text: "JUST SAY|RUSSIA|RUSSIA|RUSSIA", align: "center" },                    // 29
-    { text: "YES. TELL PEOPLE TO|DRINK BLEACH", align: "center" },                  // 32
-    { text: "THEY'RE EATING|THE DOGS!", align: "center" },               // 34
-    { text: "THE FAILING|NEW YORK TIMES|SAYS YES", align: "center" },              // 40
-    { text: "THANK YOU FOR|YOUR ATTENTION|IN THIS MATTER.|NO", align: "center" },   // 47
-  ];
+  // Listen for locked answer index from parent - REMOVE THIS BLOCK
+  // window.addEventListener('message', (event) => {
+  //   if (event.data.type === 'answerIndex') {
+  //     ...
+  //   }
+  // });
 
   const zoomText = document.getElementById("zoom-text");
   const textContainer = document.getElementById("text-container");
