@@ -12,7 +12,8 @@
       "Bash(git rm:*)",
       "Bash(powershell -ExecutionPolicy Bypass -File build_offline.ps1)",
       "Bash(del kaos_sign_b64.txt zoltar_eyes_b64.txt zoltar_orange_b64.txt build_offline.ps1)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(node:*)"
     ]
   }
 }

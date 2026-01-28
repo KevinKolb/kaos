@@ -49,7 +49,7 @@ html, body {
     0 0 15px rgba(100, 150, 255, 0.5);
   filter: blur(20px);
   opacity: 0;
-  transition: filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out;
+  transition: filter 1.5s ease-out, opacity 1.5s ease-out, transform 1.5s ease-out; /* intro */
 }
 
 /* Line breaks defined per answer using | delimiter */
@@ -134,36 +134,37 @@ html, body {
 </style>
 </head>
 <body>
+<video id="intro-video" autoplay muted playsinline style="position:absolute; width:100%; height:100%; object-fit:cover; z-index:100;">
+  <source src="../videos/kaos_water.mp4" type="video/mp4">
+</video>
 <div id="text-container">
   <div id="zoom-text"></div>
 </div>
 <script>
-  // DISPLAY MODE: ?mode=s (shortest first), default is random
-  const urlParams = new URLSearchParams(window.location.search);
-  const modeParam = urlParams.get('mode');
-  const DISPLAY_MODE = modeParam === 's' ? 'shortest' : 'random';
+  // DISPLAY MODE: sequential (in order) by default
+  let answerIndex = 0;
 
   // Each text has a rating 1-5 (higher = shown more frequently)
   // align: "center" (cheat up) or "center" (dead center)
   // fontSize: null = auto-calculate, or set specific value like "30vmin"
   const textsWithRatings = [
+    { text: "IT'S A|SCAM", align: "center" },                                       // Q1: Is that a giraffe on this test?
     { text: "BIGLY", align: "center" },                                            // 5
     { text: "COVFEFE", align: "center" },                                          // 7
-    { text: "GROCERIES", align: "center" },                                        // 9
     { text: "WITCH|HUNT", align: "center" },                                       // 10
     { text: "IT'S|RIGGED", align: "center" },                                      // 11
     { text: "IT'S A|HOAX", align: "center" },                                      // 11
     { text: "NO.|IT'S FAKE|NEWS", align: "center" },                                     // 13
-    { text: "THERE'S NO|COLLUSION", align: "center" },                                     // 13
+    { text: "MANY PEOPLE|ARE SAYING|NO", align: "center" },                        // Q8: Are my ankles normal size?
     { text: "NO.|QUIET|PIGGY", align: "center" },                                   // 15
     { text: "EVERYONE|AGREES", align: "center" },                                  // 15
     { text: "NO.|SAD!", align: "center" },                                          // 18
     { text: "YES.|DRILL BABY|DRILL", align: "center" },                             // 21
-    { text: "MANY PEOPLE|ARE SAYING|NO", align: "center" },                        // 25
+    { text: "THERE'S NO|COLLUSION", align: "center" },                             // Q13
     { text: "UNKNOWN.|JUST YELL|LOSERS", align: "center" },                         // 25
-    { text: "MANY PEOPLE|ARE SAYING|YES", align: "center" },                       // 26
-    { text: "YES.|IT'S GONNA BE|HUGE", align: "center" },                           // 26
-    { text: "IT'S A|SCAM", align: "center" },                      // 27
+    { text: "YES.|IT'S GONNA BE|HUGE", align: "center" },                           // Q15
+    { text: "MANY PEOPLE|ARE SAYING|YES", align: "center" },                       // Q16: Are groceries food?
+    { text: "GROCERIES", align: "center" },                                        // Q17
     { text: "WHAT A|STUPID|QUESTION.|YES", align: "center" },                       // 27
     { text: "ASK AGAIN LATER DO MORE TARIFFS", align: "center" },                  // 29
     { text: "JUST SAY|RUSSIA|RUSSIA|RUSSIA", align: "center" },                    // 29
@@ -172,9 +173,6 @@ html, body {
     { text: "THE FAILING|NEW YORK TIMES|SAYS YES", align: "center" },              // 40
     { text: "THANK YOU FOR|YOUR ATTENTION|IN THIS MATTER.|NO", align: "center" },   // 47
   ];
-
-  const texts = textsWithRatings.map(t => t.text);
-  const textsByShortest = [...textsWithRatings].sort((a, b) => a.text.length - b.text.length);
 
   const zoomText = document.getElementById("zoom-text");
   const textContainer = document.getElementById("text-container");
@@ -208,10 +206,8 @@ html, body {
       setTimeout(() => bubble.remove(), 14000);
     }
   }
-  setInterval(createBubble, 600);
+  // Bubbles start after intro video ends
 
-  let modeIndex = 0;
-  let lastText = '';
   let frozen = false;
   let outroTimeout = null;
   let nextTimeout = null;
@@ -252,34 +248,22 @@ html, body {
         historyIndex--;
         showItem(history[historyIndex]);
       } else {
-        // At first item, wrap to longest and go backward
+        // At first item, wrap to end and go backward
         if (reverseIndex === -1) {
-          reverseIndex = textsByShortest.length - 1; // start at longest
+          reverseIndex = textsWithRatings.length - 1;
         } else {
           reverseIndex--;
-          if (reverseIndex < 0) reverseIndex = textsByShortest.length - 1;
+          if (reverseIndex < 0) reverseIndex = textsWithRatings.length - 1;
         }
-        showItem(textsByShortest[reverseIndex]);
+        showItem(textsWithRatings[reverseIndex]);
       }
     }
   });
 
-  function getRandomFrom(pool) {
-    let item;
-    do {
-      item = pool[Math.floor(Math.random() * pool.length)];
-    } while (item.text === lastText && pool.length > 1);
-    lastText = item.text;
-    return item;
-  }
-
   function getNextItem() {
-    if (DISPLAY_MODE === "shortest") {
-      const item = textsByShortest[modeIndex];
-      modeIndex = (modeIndex + 1) % textsByShortest.length;
-      return item;
-    }
-    return getRandomFrom(textsWithRatings);
+    const item = textsWithRatings[answerIndex];
+    answerIndex = (answerIndex + 1) % textsWithRatings.length;
+    return item;
   }
 
   function getAvailableWidth() {
@@ -392,23 +376,26 @@ html, body {
     zoomText.innerHTML = processedLines.map(line => `<span class="word">${line}</span>`).join("");
     zoomText.style.fontSize = item.fontSize || getTextStyle(processedLines, false).size;
 
-    zoomText.style.transition = "filter 3s ease-out, opacity 3s ease-out, transform 3s ease-out";
+    // Intro transition
+    zoomText.style.transition = "filter 1.5s ease-out, opacity 1.5s ease-out, transform 1.5s ease-out";
     zoomText.style.filter = "blur(0)";
     zoomText.style.opacity = "1";
     zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
 
+    // Outro transition (starts at 4.5s so intro 1.5s + visible + outro 1.5s = 6s total)
     outroTimeout = setTimeout(() => {
       const exitRotate = Math.random() * 30 - 15;
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
       zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
-    }, 8000);
+    }, 4500);
 
+    // 6s answer + 6.5s gap = 12.5s cycle (syncs with questions: 6s + 500ms delay + 6s video)
     nextTimeout = setTimeout(() => {
       nextTimeout = null;
       if (!frozen) showText();
-    }, 9800);
+    }, 12500);
   }
 
   function showText() {
@@ -418,7 +405,27 @@ html, body {
     showItem(item);
   }
 
-  showText();
+  // Wait for intro video to finish, then start bubbles and delay first answer
+  const introVideo = document.getElementById('intro-video');
+  let started = false;
+
+  function startAfterVideo() {
+    if (started) return;
+    started = true;
+    introVideo.style.display = 'none';
+    // Start bubbles
+    setInterval(createBubble, 600);
+    // Hold 6.6s before first answer (syncs with questions: 500ms video delay + 6s video + 100ms offset)
+    setTimeout(showText, 6600);
+  }
+
+  introVideo.addEventListener('ended', startAfterVideo);
+  introVideo.addEventListener('error', startAfterVideo);
+
+  // Safety timeout in case video events don't fire
+  setTimeout(() => {
+    if (!started) startAfterVideo();
+  }, 7000);
 </script>
 </body>
 </html>

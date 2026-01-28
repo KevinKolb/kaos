@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions and Answers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffd700;
+        }
+        h2 {
+            margin: 30px 0 15px;
+            color: #ff6b6b;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .column {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .column h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+        .questions h3 { color: #4fc3f7; }
+        .answers h3 { color: #81c784; }
+        .item {
+            display: flex;
+            padding: 10px;
+            margin: 5px 0;
+            background: #0f3460;
+            border-radius: 5px;
+            align-items: center;
+        }
+        .item:hover {
+            background: #1a4a7a;
+        }
+        .label {
+            font-weight: bold;
+            min-width: 40px;
+            color: #ffd700;
+        }
+        .text {
+            flex: 1;
+        }
+        .extra {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2d132c;
+            border-radius: 10px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .extra h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+        .extra .item {
+            background: #4a1942;
+        }
+        .extra .item:hover {
+            background: #6b2a5e;
+        }
+        .note {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Questions and Answers</h1>
+
+    <div class="container">
+        <div class="column questions">
+            <h3>Questions (20)</h3>
+            <div class="item"><span class="label">Q1</span><span class="text">Is that a giraffe on this test?</span></div>
+            <div class="item"><span class="label">Q2</span><span class="text">Am I due in court today?</span></div>
+            <div class="item"><span class="label">Q3</span><span class="text">Did I leave anything on the Island?</span></div>
+            <div class="item"><span class="label">Q4</span><span class="text">Should I bury my ex-wife in the backyard?</span></div>
+            <div class="item"><span class="label">Q5</span><span class="text">Should I invade Greenland?</span></div>
+            <div class="item"><span class="label">Q6</span><span class="text">Is Gaza in New Jersey?</span></div>
+            <div class="item"><span class="label">Q7</span><span class="text">Are an MRI and a CT Scan the same thing?</span></div>
+            <div class="item"><span class="label">Q8</span><span class="text">Are my ankles normal size?</span></div>
+            <div class="item"><span class="label">Q9</span><span class="text">Can I deport Melania?</span></div>
+            <div class="item"><span class="label">Q10</span><span class="text">Is America Great Again yet?</span></div>
+            <div class="item"><span class="label">Q11</span><span class="text">Should I put a Trump Tower in Gaza?</span></div>
+            <div class="item"><span class="label">Q12</span><span class="text">Are my hands smaller than Gavin's?</span></div>
+            <div class="item"><span class="label">Q13</span><span class="text">Should I make Eric the President of Venezuela?</span></div>
+            <div class="item"><span class="label">Q14</span><span class="text">Will I invade Canada?</span></div>
+            <div class="item"><span class="label">Q15</span><span class="text">Should I send Vladimir a heart emoji?</span></div>
+            <div class="item"><span class="label">Q16</span><span class="text">Are groceries food?</span></div>
+            <div class="item"><span class="label">Q17</span><span class="text">Should I drink bleach for this thing on my hand?</span></div>
+            <div class="item"><span class="label">Q18</span><span class="text">Does Ivanka enjoy kissing me on the lips?</span></div>
+            <div class="item"><span class="label">Q19</span><span class="text">Should I put a Trump Tower in Venezuela?</span></div>
+            <div class="item"><span class="label">Q20</span><span class="text">Is Greenland a made up name?</span></div>
+        </div>
+
+        <div class="column answers">
+            <h3>Answers (20 paired)</h3>
+            <div class="item"><span class="label">Q</span><span class="text">IT'S A SCAM</span></div>
+            <div class="item"><span class="label">B</span><span class="text">BIGLY</span></div>
+            <div class="item"><span class="label">C</span><span class="text">COVFEFE</span></div>
+            <div class="item"><span class="label">D</span><span class="text">WITCH HUNT</span></div>
+            <div class="item"><span class="label">E</span><span class="text">IT'S RIGGED</span></div>
+            <div class="item"><span class="label">F</span><span class="text">IT'S A HOAX</span></div>
+            <div class="item"><span class="label">G</span><span class="text">NO. IT'S FAKE NEWS</span></div>
+            <div class="item"><span class="label">M</span><span class="text">MANY PEOPLE ARE SAYING NO</span></div>
+            <div class="item"><span class="label">I</span><span class="text">NO. QUIET PIGGY</span></div>
+            <div class="item"><span class="label">J</span><span class="text">EVERYONE AGREES</span></div>
+            <div class="item"><span class="label">K</span><span class="text">NO. SAD!</span></div>
+            <div class="item"><span class="label">L</span><span class="text">YES. DRILL BABY DRILL</span></div>
+            <div class="item"><span class="label">H</span><span class="text">THERE'S NO COLLUSION</span></div>
+            <div class="item"><span class="label">N</span><span class="text">UNKNOWN. JUST YELL LOSERS</span></div>
+            <div class="item"><span class="label">P</span><span class="text">YES. IT'S GONNA BE HUGE</span></div>
+            <div class="item"><span class="label">O</span><span class="text">MANY PEOPLE ARE SAYING YES</span></div>
+            <div class="item"><span class="label">A</span><span class="text">GROCERIES</span></div>
+            <div class="item"><span class="label">R</span><span class="text">WHAT A STUPID QUESTION. YES</span></div>
+            <div class="item"><span class="label">S</span><span class="text">ASK AGAIN LATER DO MORE TARIFFS</span></div>
+            <div class="item"><span class="label">T</span><span class="text">JUST SAY RUSSIA RUSSIA RUSSIA</span></div>
+        </div>
+    </div>
+
+    <div class="extra">
+        <h3>Extra Answers (4 unused)</h3>
+        <div class="item"><span class="label">U</span><span class="text">YES. TELL PEOPLE TO DRINK BLEACH</span></div>
+        <div class="item"><span class="label">V</span><span class="text">THEY'RE EATING THE DOGS!</span></div>
+        <div class="item"><span class="label">W</span><span class="text">THE FAILING NEW YORK TIMES SAYS YES</span></div>
+        <div class="item"><span class="label">X</span><span class="text">THANK YOU FOR YOUR ATTENTION IN THIS MATTER. NO</span></div>
+    </div>
+
+    <div class="extra" style="background: #1a4a1a;">
+        <h3 style="color: #4caf50;">LOCKED Assignments</h3>
+        <div class="item" style="background: #2d5a2d;"><span class="label">Q1</span><span class="text">= Q (IT'S A SCAM)</span></div>
+        <div class="item" style="background: #2d5a2d;"><span class="label">Q8</span><span class="text">= M (MANY PEOPLE ARE SAYING NO)</span></div>
+        <div class="item" style="background: #2d5a2d;"><span class="label">Q13</span><span class="text">= H (THERE'S NO COLLUSION)</span></div>
+        <div class="item" style="background: #2d5a2d;"><span class="label">Q15</span><span class="text">= P (YES. IT'S GONNA BE HUGE)</span></div>
+        <div class="item" style="background: #2d5a2d;"><span class="label">Q16</span><span class="text">= O (MANY PEOPLE ARE SAYING YES)</span></div>
+        <div class="item" style="background: #2d5a2d;"><span class="label">Q17</span><span class="text">= A (GROCERIES)</span></div>
+    </div>
+
+    <p class="note">20 questions (Q1-Q20), 24 answers (A-X). After Q20/T, the cycle restarts but answers will be offset by 4.</p>
+</body>
+</html>
