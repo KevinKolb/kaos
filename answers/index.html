@@ -429,6 +429,9 @@ html, body {
   introVideo.addEventListener('ended', startAfterVideo);
   introVideo.addEventListener('error', startAfterVideo);
 
+  // Safari requires explicit play() even with autoplay+muted
+  introVideo.play().catch(() => startAfterVideo());
+
   // Safety timeout in case video events don't fire
   setTimeout(() => {
     if (!started) startAfterVideo();
