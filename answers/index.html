@@ -414,11 +414,8 @@ html, body {
 
   // Wait for intro video to finish, then start bubbles and delay first answer
   const introVideo = document.getElementById('intro-video');
-  let started = false;
 
   function startAfterVideo() {
-    if (started) return;
-    started = true;
     introVideo.style.display = 'none';
     // Start bubbles
     setInterval(createBubble, 600);
@@ -434,7 +431,7 @@ html, body {
 
   // Safety timeout in case video events don't fire
   setTimeout(() => {
-    if (!started) startAfterVideo();
+    if (introVideo.style.display !== 'none') startAfterVideo();
   }, 7000);
 </script>
 </body>
