@@ -24,6 +24,7 @@
             border: none;
             flex: 1;
             width: 100%;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -32,7 +33,22 @@
     <iframe id="answersFrame" src="answers/index.html"></iframe>
 
     <script>
-        // No locked pairs - just load iframes
+        // Keep focus on parent body so all keyboard events come here
+        document.body.tabIndex = 0;
+        document.body.focus();
+        document.body.style.outline = 'none';
+
+        // Forward keyboard events to iframes via postMessage
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+                e.preventDefault();
+                e.stopPropagation();
+                const msg = { type: 'kaos-key', code: e.code };
+                document.getElementById('questionsFrame').contentWindow.postMessage(msg, '*');
+                document.getElementById('answersFrame').contentWindow.postMessage(msg, '*');
+                return false;
+            }
+        });
     </script>
 </body>
 </html>

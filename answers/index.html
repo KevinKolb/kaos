@@ -414,10 +414,9 @@ html, body {
     return bestLines;
   }
 
-  // Keyboard controls
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-      e.preventDefault();
+  // Keyboard handler
+  function handleKey(code) {
+    if (code === 'Space') {
       frozen = !frozen;
       if (frozen) {
         clearTimers();
@@ -432,15 +431,27 @@ html, body {
         }
       }
     }
-    if (e.code === 'ArrowRight') {
-      e.preventDefault();
+    if (code === 'ArrowRight') {
       frozen = false;
       goToAnswer(currentAnswerIndex + 1);
     }
-    if (e.code === 'ArrowLeft') {
-      e.preventDefault();
+    if (code === 'ArrowLeft') {
       frozen = false;
       goToAnswer(currentAnswerIndex - 1);
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+      e.preventDefault();
+      handleKey(e.code);
+    }
+  });
+
+  // Listen for forwarded keys from parent frame
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'kaos-key') {
+      handleKey(e.data.code);
     }
   });
 
