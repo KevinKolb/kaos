@@ -5,7 +5,8 @@ def check_and_install_dependencies():
     """Check for required packages and install if missing"""
     packages = {
         'pystray': 'pystray',
-        'PIL': 'Pillow'
+        'PIL': 'Pillow',
+        'pyautogui': 'pyautogui'
     }
     
     missing = []
@@ -39,6 +40,7 @@ import threading
 import time
 import os
 import tempfile
+import pyautogui
 
 user32 = ctypes.windll.user32
 
@@ -73,6 +75,7 @@ class MouseHider:
         self.running = True
         self.blank_cursor = None
         self.monitor_thread = None
+        self.mouse_move_thread = None
         
     def create_blank_cursor(self):
         """Create a blank cursor that works with large cursors"""
@@ -120,6 +123,24 @@ class MouseHider:
                         pass
                 user32.SetCursor(blank)
             time.sleep(0.1)
+    
+    def move_mouse_periodically(self):
+        """Move mouse every 3 minutes"""
+        while self.running:
+            try:
+                # Get current mouse position
+                current_x, current_y = pyautogui.position()
+                
+                # Move by 5 pixels, then back to original position
+                pyautogui.moveTo(current_x + 5, current_y)
+                time.sleep(0.1)
+                pyautogui.moveTo(current_x, current_y)
+                
+                # Wait 3 minutes before next movement
+                time.sleep(180)
+            except Exception as e:
+                print(f"Error moving mouse: {e}")
+                time.sleep(180)
     
     def hide_cursor(self):
         if not self.hidden:
@@ -202,6 +223,10 @@ class MouseHider:
                                  menu)
         icon_thread = threading.Thread(target=self.icon.run, daemon=True)
         icon_thread.start()
+        
+        # Start the mouse movement thread
+        self.mouse_move_thread = threading.Thread(target=self.move_mouse_periodically, daemon=True)
+        self.mouse_move_thread.start()
 
 def main():
     hider = MouseHider()
@@ -209,6 +234,7 @@ def main():
     
     print("Mouse Hide Toggle running in system tray")
     print("Press CTRL+ALT+K to toggle cursor visibility")
+    print("Mouse will move every 3 minutes to prevent system sleep")
     print("Right-click tray icon to quit")
     print("\nNOTE: If you have custom/large cursors enabled, this will replace them temporarily.")
     
