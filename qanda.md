@@ -74,4 +74,4 @@
 
 ---
 
-*Note: Answers 25-27 (TBD ANSWER 1, TBD ANSWER 2, TBD ANSWER 3) have no matching questions.*
+*24 questions (Q1-Q24), 24 answers (A1-A24).*
