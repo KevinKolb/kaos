@@ -172,14 +172,9 @@ html, body {
     { text: "TBD|ANSWER 3", align: "center" },                                        // AA
   ];
 
-  let answerIndex = 0;
-
-  // Listen for locked answer index from parent - REMOVE THIS BLOCK
-  // window.addEventListener('message', (event) => {
-  //   if (event.data.type === 'answerIndex') {
-  //     ...
-  //   }
-  // });
+  let currentIndex = -1; // -1 = video, 0+ = answers
+  let videoGapTimeout = null;
+  let bubbleInterval = null;
 
   const zoomText = document.getElementById("zoom-text");
   const textContainer = document.getElementById("text-container");
@@ -188,7 +183,7 @@ html, body {
   document.body.appendChild(measure);
 
   function createBubble() {
-    const count = Math.random() < 0.5 ? 4 : 2;
+    const count = Math.random() < 0.5 ? 12 : 6;
     for (let i = 0; i < count; i++) {
       const bubble = document.createElement("div");
       bubble.className = "bubble";
@@ -218,9 +213,6 @@ html, body {
   let frozen = false;
   let outroTimeout = null;
   let nextTimeout = null;
-  let history = [];
-  let historyIndex = -1;
-  let reverseIndex = -1;
 
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
@@ -229,48 +221,92 @@ html, body {
       if (frozen) {
         clearTimeout(outroTimeout);
         clearTimeout(nextTimeout);
+        clearTimeout(videoGapTimeout);
         outroTimeout = null;
         nextTimeout = null;
+        videoGapTimeout = null;
       } else {
-        showText();
+        if (currentIndex === -1) {
+             const v = document.getElementById('intro-video');
+             if (v.paused) v.play();
+        } else {
+             goToIndex(currentIndex + 1);
+        }
       }
     }
     if (e.code === 'ArrowRight') {
       e.preventDefault();
-      clearTimeout(outroTimeout);
-      clearTimeout(nextTimeout);
-      outroTimeout = null;
-      nextTimeout = null;
       frozen = false;
-      showText();
+      goToIndex(currentIndex + 1);
     }
     if (e.code === 'ArrowLeft') {
       e.preventDefault();
-      clearTimeout(outroTimeout);
-      clearTimeout(nextTimeout);
-      outroTimeout = null;
-      nextTimeout = null;
       frozen = false;
-      if (historyIndex > 0) {
-        historyIndex--;
-        showItem(history[historyIndex]);
-      } else {
-        // At first item, wrap to end and go backward
-        if (reverseIndex === -1) {
-          reverseIndex = textsWithRatings.length - 1;
-        } else {
-          reverseIndex--;
-          if (reverseIndex < 0) reverseIndex = textsWithRatings.length - 1;
-        }
-        showItem(textsWithRatings[reverseIndex]);
-      }
+      goToIndex(currentIndex - 1);
     }
   });
 
-  function getNextItem() {
-    const item = textsWithRatings[answerIndex];
-    answerIndex = (answerIndex + 1) % textsWithRatings.length;
-    return item;
+  function ensureBubbles() {
+    if (!bubbleInterval) {
+        bubbleInterval = setInterval(createBubble, 600);
+    }
+  }
+
+  function playVideo() {
+    const v = document.getElementById('intro-video');
+    
+    // Hide text
+    zoomText.style.opacity = '0';
+    zoomText.style.transition = 'none';
+    
+    // Show video
+    v.style.display = 'block';
+    v.currentTime = 0;
+    v.play().catch(e => console.error("Autoplay prevent", e));
+    
+    // Set up one-time handler to progress after video ends
+    const handleVideoEnd = () => {
+      v.style.display = 'none';
+      ensureBubbles();
+      if (!frozen) {
+        videoGapTimeout = setTimeout(() => {
+          goToIndex(0);
+        }, 6600);
+      }
+    };
+    v.addEventListener('ended', handleVideoEnd, { once: true });
+    
+    // Safety timeout in case video doesn't end
+    videoGapTimeout = setTimeout(() => {
+      if (v.style.display !== 'none') {
+        handleVideoEnd();
+      }
+    }, 10000);
+  }
+
+  function goToIndex(index) {
+    if (index < -1) index = textsWithRatings.length - 1;
+    if (index >= textsWithRatings.length) index = -1;
+    
+    // Clear any pending timers so the new item starts its cycle fresh
+    clearTimeout(outroTimeout);
+    clearTimeout(nextTimeout);
+    clearTimeout(videoGapTimeout);
+    outroTimeout = null;
+    nextTimeout = null;
+    videoGapTimeout = null;
+
+    currentIndex = index;
+    
+    if (index === -1) {
+        playVideo();
+    } else {
+        const v = document.getElementById('intro-video');
+        v.style.display = 'none';
+        v.pause();
+        ensureBubbles(); 
+        showItem(textsWithRatings[index]);
+    }
   }
 
   function getAvailableWidth() {
@@ -401,15 +437,8 @@ html, body {
     // 6s answer + 6.5s gap = 12.5s cycle (syncs with questions: 6s + 500ms delay + 6s video)
     nextTimeout = setTimeout(() => {
       nextTimeout = null;
-      if (!frozen) showText();
+      if (!frozen) goToIndex(currentIndex + 1);
     }, 12500);
-  }
-
-  function showText() {
-    const item = getNextItem();
-    history.push(item);
-    historyIndex = history.length - 1;
-    showItem(item);
   }
 
   // Ensure the element is muted/playsinline at runtime (helps Safari autoplay)
@@ -447,9 +476,11 @@ html, body {
   function startAfterVideo() {
     introVideo.style.display = 'none';
     // Start bubbles
-    setInterval(createBubble, 600);
+    ensureBubbles();
     // Hold 6.6s before first answer (syncs with questions: 500ms video delay + 6s video + 100ms offset)
-    setTimeout(showText, 6600);
+    videoGapTimeout = setTimeout(() => {
+        if (!frozen) goToIndex(0);
+    }, 6600);
   }
 
   introVideo.addEventListener('ended', startAfterVideo);
