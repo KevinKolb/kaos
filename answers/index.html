@@ -141,7 +141,7 @@ html, body {
   <div id="zoom-text"></div>
 </div>
 <script>
-  // SEQUENTIAL MODE: cycle through all answers A-X
+  // SEQUENTIAL MODE: cycle through all answers
   const textsWithRatings = [
     { text: "GROCERIES", align: "center" },                                         // A
     { text: "BIGLY", align: "center" },                                             // B
@@ -167,17 +167,23 @@ html, body {
     { text: "THEY'RE EATING|THE DOGS!", align: "center" },                          // V
     { text: "THE FAILING|NEW YORK TIMES|SAYS YES", align: "center" },               // W
     { text: "THANK YOU FOR YOUR|ATTENTION IN|THIS MATTER.|NO", align: "center" },   // X
-    { text: "TBD|ANSWER 1", align: "center" },                                        // Y
-    { text: "TBD|ANSWER 2", align: "center" },                                        // Z
-    { text: "TBD|ANSWER 3", align: "center" },                                        // AA
+    { text: "TBD|ANSWER 1", align: "center" },                                      // Y
+    { text: "TBD|ANSWER 2", align: "center" },                                      // Z
+    { text: "TBD|ANSWER 3", align: "center" },                                      // AA
   ];
 
-  let currentIndex = -1; // -1 = video, 0+ = answers
-  let videoGapTimeout = null;
+  // Flow: kaos_water video > bubbles pause > Answer 1 > bubbles pause > Answer 2 > ... > loop
+  // States: 'video', 'bubbles', 'answer'
+  let currentAnswerIndex = 0;
+  let currentState = 'video';
+  let frozen = false;
+  let stepTimeout = null;
+  let outroTimeout = null;
   let bubbleInterval = null;
 
   const zoomText = document.getElementById("zoom-text");
   const textContainer = document.getElementById("text-container");
+  const introVideo = document.getElementById('intro-video');
   const measure = document.createElement("div");
   measure.id = "measure";
   document.body.appendChild(measure);
@@ -189,10 +195,10 @@ html, body {
       bubble.className = "bubble";
       bubble.style.left = Math.random() * 100 + "%";
       const rand = Math.random();
-      const size = rand < 0.02 ? Math.random() * 300 + 500   // 2%: gigantic
-        : rand < 0.08 ? Math.random() * 200 + 250            // 6%: huge
-        : rand < 0.25 ? Math.random() * 150 + 80             // 17%: large
-        : Math.random() * 30 + 8;                            // 75%: small
+      const size = rand < 0.02 ? Math.random() * 300 + 500
+        : rand < 0.08 ? Math.random() * 200 + 250
+        : rand < 0.25 ? Math.random() * 150 + 80
+        : Math.random() * 30 + 8;
       bubble.style.width = bubble.style.height = size + "px";
       bubble.style.bottom = (-size - 20) + "px";
       bubble.classList.add(Math.random() < 0.2 ? 'front' : 'back');
@@ -208,204 +214,80 @@ html, body {
       setTimeout(() => bubble.remove(), 14000);
     }
   }
-  // Bubbles start after intro video ends
-
-  let frozen = false;
-  let outroTimeout = null;
-  let nextTimeout = null;
-
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-      e.preventDefault();
-      frozen = !frozen;
-      if (frozen) {
-        clearTimeout(outroTimeout);
-        clearTimeout(nextTimeout);
-        clearTimeout(videoGapTimeout);
-        outroTimeout = null;
-        nextTimeout = null;
-        videoGapTimeout = null;
-      } else {
-        if (currentIndex === -1) {
-             const v = document.getElementById('intro-video');
-             if (v.paused) v.play();
-        } else {
-             goToIndex(currentIndex + 1);
-        }
-      }
-    }
-    if (e.code === 'ArrowRight') {
-      e.preventDefault();
-      frozen = false;
-      goToIndex(currentIndex + 1);
-    }
-    if (e.code === 'ArrowLeft') {
-      e.preventDefault();
-      frozen = false;
-      goToIndex(currentIndex - 1);
-    }
-  });
 
   function ensureBubbles() {
     if (!bubbleInterval) {
-        bubbleInterval = setInterval(createBubble, 600);
+      bubbleInterval = setInterval(createBubble, 600);
     }
   }
 
-  function playVideo() {
-    const v = document.getElementById('intro-video');
-    
-    // Hide text
+  function clearTimers() {
+    clearTimeout(stepTimeout);
+    clearTimeout(outroTimeout);
+    stepTimeout = null;
+    outroTimeout = null;
+  }
+
+  // Step 1: Play kaos_water video
+  function playKaosWater() {
+    currentState = 'video';
+    clearTimers();
+
+    // Hide any text
     zoomText.style.opacity = '0';
     zoomText.style.transition = 'none';
-    
-    // Show video
-    v.style.display = 'block';
-    v.currentTime = 0;
-    v.play().catch(e => console.error("Autoplay prevent", e));
-    
-    // Set up one-time handler to progress after video ends
-    const handleVideoEnd = () => {
-      v.style.display = 'none';
+
+    // Show and play video
+    introVideo.style.display = 'block';
+    introVideo.currentTime = 0;
+
+    const handleEnded = () => {
+      introVideo.removeEventListener('ended', handleEnded);
+      introVideo.style.display = 'none';
       ensureBubbles();
-      if (!frozen) {
-        videoGapTimeout = setTimeout(() => {
-          goToIndex(0);
-        }, 6600);
-      }
+      if (!frozen) showBubblePause(true);
     };
-    v.addEventListener('ended', handleVideoEnd, { once: true });
-    
-    // Safety timeout in case video doesn't end
-    videoGapTimeout = setTimeout(() => {
-      if (v.style.display !== 'none') {
-        handleVideoEnd();
-      }
-    }, 10000);
+    introVideo.addEventListener('ended', handleEnded);
+
+    introVideo.play().catch(e => {
+      console.log('Video play failed:', e);
+      introVideo.style.display = 'none';
+      ensureBubbles();
+      if (!frozen) showBubblePause(true);
+    });
   }
 
-  function goToIndex(index) {
-    if (index < -1) index = textsWithRatings.length - 1;
-    if (index >= textsWithRatings.length) index = -1;
-    
-    // Clear any pending timers so the new item starts its cycle fresh
-    clearTimeout(outroTimeout);
-    clearTimeout(nextTimeout);
-    clearTimeout(videoGapTimeout);
-    outroTimeout = null;
-    nextTimeout = null;
-    videoGapTimeout = null;
+  // Step 2: Bubbles-only pause between video/answers
+  function showBubblePause(beforeAnswer) {
+    currentState = 'bubbles';
 
-    currentIndex = index;
-    
-    if (index === -1) {
-        playVideo();
-    } else {
-        const v = document.getElementById('intro-video');
-        v.style.display = 'none';
-        v.pause();
-        ensureBubbles(); 
-        showItem(textsWithRatings[index]);
-    }
-  }
+    // Make sure text is hidden
+    zoomText.style.opacity = '0';
+    zoomText.style.transition = 'none';
 
-  function getAvailableWidth() {
-    return (textContainer.clientWidth || window.innerWidth) * 0.95;
-  }
-
-  function getAvailableHeight() {
-    return (textContainer.clientHeight || window.innerHeight) * 0.95;
-  }
-
-  function measureWord(word, size) {
-    measure.style.fontSize = size + "vmin";
-    measure.textContent = word;
-    return measure.getBoundingClientRect().width;
-  }
-
-  function measureLineHeight(size) {
-    measure.style.fontSize = size + "vmin";
-    measure.textContent = "X";
-    return measure.getBoundingClientRect().height * 1.1; // line-height factor
-  }
-
-  function getTextStyle(lines, useWordWrap = false) {
-    const availableWidth = getAvailableWidth();
-    const availableHeight = getAvailableHeight();
-
-    if (useWordWrap) {
-      // For word wrap: size based on longest word and estimated lines
-      const words = lines[0].split(" ");
-      const getLongestWord = (s) => Math.max(...words.map(w => measureWord(w, s)));
-
-      let size = 120;
-      while (size > 4) {
-        const longestWordWidth = getLongestWord(size);
-        if (longestWordWidth > availableWidth) {
-          size--;
-          continue;
+    stepTimeout = setTimeout(() => {
+      if (!frozen) {
+        if (beforeAnswer) {
+          showAnswer();
+        } else {
+          // After an answer: advance to next answer or loop
+          currentAnswerIndex++;
+          if (currentAnswerIndex >= textsWithRatings.length) {
+            currentAnswerIndex = 0;
+            playKaosWater();
+          } else {
+            showAnswer();
+          }
         }
-        // Estimate lines needed at this size
-        const lineHeight = measureLineHeight(size);
-        const wordsPerLine = Math.floor(availableWidth / (longestWordWidth * 0.6)); // rough estimate
-        const estimatedLines = Math.ceil(words.length / Math.max(wordsPerLine, 1));
-        if (lineHeight * estimatedLines > availableHeight) {
-          size--;
-          continue;
-        }
-        break;
       }
-      return { size: size + "vmin" };
-    }
-
-    // For one word per line
-    const getWidestLine = (s) => Math.max(...lines.map(line => measureWord(line, s)));
-    let size = 120;
-    while (size > 4 && (getWidestLine(size) > availableWidth || measureLineHeight(size) * lines.length > availableHeight)) {
-      size--;
-    }
-    return { size: size + "vmin" };
+    }, 6500);
   }
 
-  function balanceLines(words, numLines) {
-    // Distribute words across lines to balance widths
-    if (numLines >= words.length) return words.map(w => [w]);
+  // Step 3: Show answer text
+  function showAnswer() {
+    currentState = 'answer';
+    const item = textsWithRatings[currentAnswerIndex];
 
-    const lines = [];
-    const wordsPerLine = words.length / numLines;
-    let currentIndex = 0;
-
-    for (let i = 0; i < numLines; i++) {
-      const targetEnd = Math.round((i + 1) * wordsPerLine);
-      const lineWords = words.slice(currentIndex, targetEnd);
-      lines.push(lineWords.join(" "));
-      currentIndex = targetEnd;
-    }
-    return lines;
-  }
-
-  function findBestLineBreaks(words) {
-    // Try different line counts and find most balanced
-    const wordCount = words.length;
-    let bestLines = words; // default: one word per line
-    let bestVariance = Infinity;
-
-    // Try 2 to wordCount-1 lines
-    for (let numLines = 2; numLines < wordCount; numLines++) {
-      const lines = balanceLines(words, numLines);
-      const lengths = lines.map(l => l.length);
-      const avg = lengths.reduce((a, b) => a + b, 0) / lengths.length;
-      const variance = lengths.reduce((sum, len) => sum + Math.pow(len - avg, 2), 0) / lengths.length;
-
-      if (variance < bestVariance) {
-        bestVariance = variance;
-        bestLines = lines;
-      }
-    }
-    return bestLines;
-  }
-
-  function showItem(item) {
     const hasPipes = item.text.includes("|");
     const lines = hasPipes ? item.text.split("|") : item.text.split(" ");
     const useWordWrap = !hasPipes && lines.length >= 4;
@@ -425,7 +307,7 @@ html, body {
     zoomText.style.opacity = "1";
     zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
 
-    // Outro transition (starts at 4.5s so intro 1.5s + visible + outro 1.5s = 6s total)
+    // Outro transition at 4.5s (intro 1.5s + visible + outro 1.5s = 6s total)
     outroTimeout = setTimeout(() => {
       const exitRotate = Math.random() * 30 - 15;
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
@@ -434,83 +316,163 @@ html, body {
       zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
     }, 4500);
 
-    // 6s answer + 6.5s gap = 12.5s cycle (syncs with questions: 6s + 500ms delay + 6s video)
-    nextTimeout = setTimeout(() => {
-      nextTimeout = null;
-      if (!frozen) goToIndex(currentIndex + 1);
-    }, 12500);
+    // After 6s answer display, go to bubble pause
+    stepTimeout = setTimeout(() => {
+      if (!frozen) showBubblePause(false);
+    }, 6000);
   }
 
-  // Ensure the element is muted/playsinline at runtime (helps Safari autoplay)
-  const introVideo = document.getElementById('intro-video');
+  // Navigate manually
+  function goToAnswer(index) {
+    clearTimers();
+    introVideo.pause();
+    introVideo.style.display = 'none';
+    ensureBubbles();
+
+    if (index < 0) index = textsWithRatings.length - 1;
+    if (index >= textsWithRatings.length) index = 0;
+
+    currentAnswerIndex = index;
+    showAnswer();
+  }
+
+  // Text sizing helpers
+  function getAvailableWidth() {
+    return (textContainer.clientWidth || window.innerWidth) * 0.95;
+  }
+
+  function getAvailableHeight() {
+    return (textContainer.clientHeight || window.innerHeight) * 0.95;
+  }
+
+  function measureWord(word, size) {
+    measure.style.fontSize = size + "vmin";
+    measure.textContent = word;
+    return measure.getBoundingClientRect().width;
+  }
+
+  function measureLineHeight(size) {
+    measure.style.fontSize = size + "vmin";
+    measure.textContent = "X";
+    return measure.getBoundingClientRect().height * 1.1;
+  }
+
+  function getTextStyle(lines, useWordWrap = false) {
+    const availableWidth = getAvailableWidth();
+    const availableHeight = getAvailableHeight();
+
+    if (useWordWrap) {
+      const words = lines[0].split(" ");
+      const getLongestWord = (s) => Math.max(...words.map(w => measureWord(w, s)));
+      let size = 120;
+      while (size > 4) {
+        const longestWordWidth = getLongestWord(size);
+        if (longestWordWidth > availableWidth) { size--; continue; }
+        const lineHeight = measureLineHeight(size);
+        const wordsPerLine = Math.floor(availableWidth / (longestWordWidth * 0.6));
+        const estimatedLines = Math.ceil(words.length / Math.max(wordsPerLine, 1));
+        if (lineHeight * estimatedLines > availableHeight) { size--; continue; }
+        break;
+      }
+      return { size: size + "vmin" };
+    }
+
+    const getWidestLine = (s) => Math.max(...lines.map(line => measureWord(line, s)));
+    let size = 120;
+    while (size > 4 && (getWidestLine(size) > availableWidth || measureLineHeight(size) * lines.length > availableHeight)) {
+      size--;
+    }
+    return { size: size + "vmin" };
+  }
+
+  function balanceLines(words, numLines) {
+    if (numLines >= words.length) return words.map(w => [w]);
+    const lines = [];
+    const wordsPerLine = words.length / numLines;
+    let idx = 0;
+    for (let i = 0; i < numLines; i++) {
+      const targetEnd = Math.round((i + 1) * wordsPerLine);
+      lines.push(words.slice(idx, targetEnd).join(" "));
+      idx = targetEnd;
+    }
+    return lines;
+  }
+
+  function findBestLineBreaks(words) {
+    const wordCount = words.length;
+    let bestLines = words;
+    let bestVariance = Infinity;
+    for (let numLines = 2; numLines < wordCount; numLines++) {
+      const lines = balanceLines(words, numLines);
+      const lengths = lines.map(l => l.length);
+      const avg = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+      const variance = lengths.reduce((sum, len) => sum + Math.pow(len - avg, 2), 0) / lengths.length;
+      if (variance < bestVariance) {
+        bestVariance = variance;
+        bestLines = lines;
+      }
+    }
+    return bestLines;
+  }
+
+  // Keyboard controls
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      frozen = !frozen;
+      if (frozen) {
+        clearTimers();
+        if (currentState === 'video') introVideo.pause();
+      } else {
+        if (currentState === 'video') {
+          introVideo.play();
+        } else if (currentState === 'answer') {
+          showAnswer();
+        } else {
+          showBubblePause(true);
+        }
+      }
+    }
+    if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      frozen = false;
+      goToAnswer(currentAnswerIndex + 1);
+    }
+    if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      frozen = false;
+      goToAnswer(currentAnswerIndex - 1);
+    }
+  });
+
+  // Autoplay setup
   introVideo.muted = true;
   introVideo.setAttribute('muted', '');
   introVideo.setAttribute('playsinline', '');
   introVideo.setAttribute('webkit-playsinline', '');
   introVideo.playsInline = true;
 
-  // Small tap-to-play overlay for browsers that block autoplay (Safari)
-  const tapOverlay = document.createElement('div');
-  tapOverlay.id = 'tap-overlay';
-  Object.assign(tapOverlay.style, {
-    position: 'fixed',
-    inset: '0',
-    display: 'none',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999,
-    cursor: 'pointer',
-    pointerEvents: 'auto'
-  });
-  tapOverlay.innerHTML = '<div style="background:rgba(0,0,0,0.65);color:#fff;padding:10px 16px;border-radius:8px;font-family:inherit">Tap to play video</div>';
-  document.body.appendChild(tapOverlay);
-  tapOverlay.addEventListener('click', () => {
-    tapOverlay.style.display = 'none';
-    introVideo.load();
-    introVideo.play().catch(() => {
-      // If still failing, proceed with fallback behavior
-      startAfterVideo();
-    });
-  });
-
-  function startAfterVideo() {
+  // Start: play kaos_water video
+  introVideo.addEventListener('ended', function onFirstEnd() {
+    introVideo.removeEventListener('ended', onFirstEnd);
     introVideo.style.display = 'none';
-    // Start bubbles
     ensureBubbles();
-    // Hold 6.6s before first answer (syncs with questions: 500ms video delay + 6s video + 100ms offset)
-    videoGapTimeout = setTimeout(() => {
-        if (!frozen) goToIndex(0);
-    }, 6600);
-  }
-
-  introVideo.addEventListener('ended', startAfterVideo);
-  introVideo.addEventListener('error', startAfterVideo);
-
-  // If playback starts, hide overlay and set a timeout to start after video duration (fallback for Safari 'ended' issues)
-  let videoStarted = false;
-  introVideo.addEventListener('playing', () => {
-    if (!videoStarted) {
-      videoStarted = true;
-      tapOverlay.style.display = 'none';
-      // Wait for the video's duration to simulate 'ended' if it doesn't fire; fallback to 6s if duration not available
-      const durationMs = (introVideo.duration && isFinite(introVideo.duration)) ? introVideo.duration * 1000 : 6000;
-      setTimeout(startAfterVideo, durationMs);
-    }
+    if (!frozen) showBubblePause(true);
   });
 
-  // Stronger autoplay attempt: load then try to play; if blocked, show overlay so user can tap
   introVideo.load();
-  introVideo.play().then(() => {
-    // autoplay succeeded
-  }).catch(() => {
-    // show overlay to prompt user gesture (short delay so overlay doesn't flash)
-    setTimeout(() => { tapOverlay.style.display = 'flex'; }, 250);
+  introVideo.play().catch(() => {
+    introVideo.style.display = 'none';
+    ensureBubbles();
+    if (!frozen) showBubblePause(true);
   });
 
-  // Safety: if video never hides (e.g., doesn't play/end), fallback to start after 10s
+  // Safety timeout
   setTimeout(() => {
-    if (introVideo.style.display !== 'none') {
-      startAfterVideo();
+    if (introVideo.style.display !== 'none' && currentState === 'video' && currentAnswerIndex === 0) {
+      introVideo.style.display = 'none';
+      ensureBubbles();
+      if (!frozen) showBubblePause(true);
     }
   }, 10000);
 </script>
