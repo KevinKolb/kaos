@@ -303,23 +303,25 @@
             }
         }
 
-        function playVideo(videoEl, src, onDone) {
+        // Hard-coded durations (ms) - keeps both screens in sync
+        const INTRO_DURATION = 6000;    // KAOS_SIGN.mp4
+        const QUESTION_DURATION = 6000; // question text display
+        const FADE_DURATION = 1000;     // question fade-out
+        const ZOLTAR_DURATION = 6000;   // ZOLTAR_ORANGE_2.mp4
+        const ARROW_DURATION = 6000;    // down_arrow.mp4
+
+        function playVideo(videoEl, src, duration, onDone) {
             videoEl.src = src;
             videoEl.style.display = 'block';
             videoEl.currentTime = 0;
+            videoEl.play().catch(e => console.log('Video play failed:', e));
 
-            const handleEnded = () => {
-                videoEl.removeEventListener('ended', handleEnded);
+            // Hard cutoff after fixed duration
+            stepTimeout = setTimeout(() => {
+                videoEl.pause();
                 videoEl.style.display = 'none';
                 if (!frozen) onDone();
-            };
-            videoEl.addEventListener('ended', handleEnded);
-
-            videoEl.play().catch(e => {
-                console.log('Video play failed:', e);
-                videoEl.style.display = 'none';
-                if (!frozen) onDone();
-            });
+            }, duration);
         }
 
         // Step 1: Play KAOS_SIGN intro
@@ -331,19 +333,14 @@
 
             introVideo.style.display = 'block';
             introVideo.currentTime = 0;
+            introVideo.play().catch(e => console.log('Intro play failed:', e));
 
-            const handleEnded = () => {
-                introVideo.removeEventListener('ended', handleEnded);
+            // Hard cutoff after fixed duration
+            stepTimeout = setTimeout(() => {
+                introVideo.pause();
                 introVideo.style.display = 'none';
                 if (!frozen) showNextQuestion();
-            };
-            introVideo.addEventListener('ended', handleEnded);
-
-            introVideo.play().catch(e => {
-                console.log('Intro play failed:', e);
-                introVideo.style.display = 'none';
-                if (!frozen) showNextQuestion();
-            });
+            }, INTRO_DURATION);
         }
 
         // Step 2: Show a question for 6 seconds
@@ -361,15 +358,15 @@
                     setTimeout(() => {
                         hideAllQuestions();
                         playZoltar();
-                    }, 1000);
+                    }, FADE_DURATION);
                 }
-            }, 6000);
+            }, QUESTION_DURATION);
         }
 
         // Step 3: Play ZOLTAR_ORANGE_2
         function playZoltar() {
             currentState = 'zoltar';
-            playVideo(signVideo, '../videos/ZOLTAR_ORANGE_2.mp4', function() {
+            playVideo(signVideo, '../videos/ZOLTAR_ORANGE_2.mp4', ZOLTAR_DURATION, function() {
                 playArrow();
             });
         }
@@ -377,7 +374,7 @@
         // Step 4: Play down_arrow
         function playArrow() {
             currentState = 'arrow';
-            playVideo(signVideo, '../videos/down_arrow.mp4', function() {
+            playVideo(signVideo, '../videos/down_arrow.mp4', ARROW_DURATION, function() {
                 // Advance to next question
                 currentQuestionIndex++;
                 if (currentQuestionIndex >= questions.length) {
@@ -406,27 +403,18 @@
             showNextQuestion();
         }
 
-        // Start: play intro video
+        // Start: play intro video with hard-coded cutoff
         introVideo.play().catch(() => {
-            // Autoplay blocked, start questions directly
             introVideo.style.display = 'none';
             showNextQuestion();
         });
 
-        // When intro video ends on first load, start the question cycle
-        introVideo.addEventListener('ended', function onFirstEnd() {
-            introVideo.removeEventListener('ended', onFirstEnd);
+        // Hard cutoff after fixed duration
+        stepTimeout = setTimeout(() => {
+            introVideo.pause();
             introVideo.style.display = 'none';
-            showNextQuestion();
-        });
-
-        // Safety timeout for intro
-        setTimeout(() => {
-            if (introVideo.style.display !== 'none' && currentState === 'intro' && currentQuestionIndex === 0) {
-                introVideo.style.display = 'none';
-                showNextQuestion();
-            }
-        }, 10000);
+            if (!frozen) showNextQuestion();
+        }, INTRO_DURATION);
 
         // Unmute on first click
         document.addEventListener('click', function() {

@@ -221,6 +221,11 @@ html, body {
     }
   }
 
+  // Hard-coded durations (ms) - keeps both screens in sync
+  const VIDEO_DURATION = 6000;    // kaos_water.mp4 (matches KAOS_SIGN.mp4)
+  const BUBBLE_DURATION = 13000;  // question (6s) + fade (1s) + ZOLTAR_ORANGE_2 (6s)
+  const ANSWER_DURATION = 6000;   // matches down_arrow.mp4
+
   function clearTimers() {
     clearTimeout(stepTimeout);
     clearTimeout(outroTimeout);
@@ -240,21 +245,15 @@ html, body {
     // Show and play video
     introVideo.style.display = 'block';
     introVideo.currentTime = 0;
+    introVideo.play().catch(e => console.log('Video play failed:', e));
 
-    const handleEnded = () => {
-      introVideo.removeEventListener('ended', handleEnded);
+    // Hard cutoff after fixed duration
+    stepTimeout = setTimeout(() => {
+      introVideo.pause();
       introVideo.style.display = 'none';
       ensureBubbles();
       if (!frozen) showBubblePause(true);
-    };
-    introVideo.addEventListener('ended', handleEnded);
-
-    introVideo.play().catch(e => {
-      console.log('Video play failed:', e);
-      introVideo.style.display = 'none';
-      ensureBubbles();
-      if (!frozen) showBubblePause(true);
-    });
+    }, VIDEO_DURATION);
   }
 
   // Step 2: Bubbles-only pause between video/answers
@@ -280,7 +279,7 @@ html, body {
           }
         }
       }
-    }, 6500);
+    }, BUBBLE_DURATION);
   }
 
   // Step 3: Show answer text
@@ -314,12 +313,12 @@ html, body {
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
       zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
-    }, 4500);
+    }, ANSWER_DURATION - 1500);
 
-    // After 6s answer display, go to bubble pause
+    // After fixed answer duration, go to bubble pause
     stepTimeout = setTimeout(() => {
       if (!frozen) showBubblePause(false);
-    }, 6000);
+    }, ANSWER_DURATION);
   }
 
   // Navigate manually
@@ -452,14 +451,7 @@ html, body {
   introVideo.setAttribute('webkit-playsinline', '');
   introVideo.playsInline = true;
 
-  // Start: play kaos_water video
-  introVideo.addEventListener('ended', function onFirstEnd() {
-    introVideo.removeEventListener('ended', onFirstEnd);
-    introVideo.style.display = 'none';
-    ensureBubbles();
-    if (!frozen) showBubblePause(true);
-  });
-
+  // Start: play kaos_water video with hard-coded cutoff
   introVideo.load();
   introVideo.play().catch(() => {
     introVideo.style.display = 'none';
@@ -467,14 +459,13 @@ html, body {
     if (!frozen) showBubblePause(true);
   });
 
-  // Safety timeout
-  setTimeout(() => {
-    if (introVideo.style.display !== 'none' && currentState === 'video' && currentAnswerIndex === 0) {
-      introVideo.style.display = 'none';
-      ensureBubbles();
-      if (!frozen) showBubblePause(true);
-    }
-  }, 10000);
+  // Hard cutoff after fixed duration
+  stepTimeout = setTimeout(() => {
+    introVideo.pause();
+    introVideo.style.display = 'none';
+    ensureBubbles();
+    if (!frozen) showBubblePause(true);
+  }, VIDEO_DURATION);
 </script>
 </body>
 </html>
