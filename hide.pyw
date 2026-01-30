@@ -1,39 +1,39 @@
 import sys
 import subprocess
+import ctypes
+from ctypes import wintypes
 
-def check_and_install_dependencies():
-    """Check for required packages and install if missing"""
-    packages = {
-        'pystray': 'pystray',
-        'PIL': 'Pillow',
-        'pyautogui': 'pyautogui'
-    }
-    
+def check_dependencies():
+    """Check for required packages and show a GUI message if missing."""
+    required = [
+        ("pystray", "pystray"),
+        ("PIL", "Pillow"),
+        ("pyautogui", "pyautogui"),
+    ]
+
     missing = []
-    for module, package in packages.items():
+    for module, package in required:
         try:
             __import__(module)
         except ImportError:
             missing.append(package)
-    
-    if missing:
-        print(f"Installing missing packages: {', '.join(missing)}")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
-            print("Packages installed successfully!")
-            return True
-        except subprocess.CalledProcessError:
-            print(f"Failed to install packages. Please install manually with: pip install {' '.join(missing)}")
-            return False
-    else:
-        print("All dependencies OK")
-        return True
 
-if not check_and_install_dependencies():
+    if missing:
+        msg = (
+            "Missing Python packages: " + ", ".join(missing) +
+            "\n\nPlease install them from a terminal:\n"
+            "pip install " + " ".join(missing)
+        )
+        try:
+            ctypes.windll.user32.MessageBoxW(0, msg, "Mouse Hider - Missing Dependencies", 0)
+        except Exception:
+            pass
+        return False
+    return True
+
+if not check_dependencies():
     sys.exit(1)
 
-import ctypes
-from ctypes import wintypes
 import pystray
 from PIL import Image, ImageDraw
 import threading
@@ -42,11 +42,14 @@ import os
 import tempfile
 import pyautogui
 
+pyautogui.FAILSAFE = False
+
 user32 = ctypes.windll.user32
 
 MOD_ALT = 0x0001
 MOD_CONTROL = 0x0002
 VK_K = 0x4B
+PM_REMOVE = 0x0001
 
 # All Windows cursor types
 CURSOR_TYPES = [
@@ -221,8 +224,13 @@ class MouseHider:
         self.icon = pystray.Icon("mouse_hider", icon_image, 
                                  "Mouse Hider - Cursor: Visible\nCtrl+Alt+K to toggle", 
                                  menu)
-        icon_thread = threading.Thread(target=self.icon.run, daemon=True)
-        icon_thread.start()
+        # Start tray icon using pystray's detached runner to avoid blocking
+        try:
+            self.icon.run_detached()
+        except Exception:
+            # Fallback to thread if run_detached is unavailable
+            icon_thread = threading.Thread(target=self.icon.run, daemon=True)
+            icon_thread.start()
         
         # Start the mouse movement thread
         self.mouse_move_thread = threading.Thread(target=self.move_mouse_periodically, daemon=True)
@@ -247,13 +255,15 @@ def main():
     try:
         msg = wintypes.MSG()
         while hider.running:
-            result = user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
-            if result == 0 or result == -1:
-                break
-            if msg.message == 0x0312:  # WM_HOTKEY
-                hider.toggle_cursor()
-            user32.TranslateMessage(ctypes.byref(msg))
-            user32.DispatchMessageW(ctypes.byref(msg))
+            # Non-blocking message loop so we can exit cleanly
+            has_msg = user32.PeekMessageW(ctypes.byref(msg), None, 0, 0, PM_REMOVE)
+            if has_msg:
+                if msg.message == 0x0312:  # WM_HOTKEY
+                    hider.toggle_cursor()
+                user32.TranslateMessage(ctypes.byref(msg))
+                user32.DispatchMessageW(ctypes.byref(msg))
+            else:
+                time.sleep(0.01)
     finally:
         user32.UnregisterHotKey(None, 1)
         if hider.hidden:
