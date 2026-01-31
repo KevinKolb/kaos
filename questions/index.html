@@ -230,19 +230,19 @@
             cloudsContainer.appendChild(cloud);
         }
 
-        // Question rotation
+        // Sequence: KAOS_SIGN → [ZOLTAR_ORANGE_2 → QUESTION] × N → repeat
+
         const questions = document.querySelectorAll('.question');
         const introVideo = document.getElementById('intro-video');
         const signVideo = document.getElementById('signVideo');
         let currentQuestionIndex = 0;
         let stepTimeout = null;
 
-        // The sequence for each question is:
-        // Show Question -> play ZOLTAR_ORANGE_2 -> play down_arrow -> next question
-        // After all questions: play KAOS_SIGN (intro) and restart
-
-        // States: 'intro', 'question', 'zoltar', 'arrow'
-        let currentState = 'intro';
+        // Durations (ms)
+        const INTRO_DURATION = 6000;
+        const ZOLTAR_DURATION = 6000;
+        const QUESTION_DURATION = 6000;
+        const FADE_DURATION = 1000;
 
         // Calculate optimal font size based on text length and viewport
         function fitTextToScreen(element) {
@@ -289,84 +289,6 @@
             }
         }
 
-        // Hard-coded durations (ms) - keeps both screens in sync
-        const INTRO_DURATION = 6000;    // KAOS_SIGN.mp4
-        const QUESTION_DURATION = 6000; // question text display
-        const FADE_DURATION = 1000;     // question fade-out
-        const ZOLTAR_DURATION = 6000;   // ZOLTAR_ORANGE_2.mp4
-        const ARROW_DURATION = 6000;    // down_arrow.mp4
-        
-        // Total cycle time per question (no intro before each question)
-        const CYCLE_TIME = QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION + ARROW_DURATION; // 19000ms
-        const TOTAL_CYCLE = INTRO_DURATION + (CYCLE_TIME * questions.length); // Full loop with intro at start
-        
-        // Clock-based sync
-        let syncCheckInterval = null;
-        
-        function getCurrentCyclePosition() {
-          const now = Date.now();
-          const positionInCycle = now % TOTAL_CYCLE;
-          return positionInCycle;
-        }
-        
-        function syncToClockPosition() {
-          const position = getCurrentCyclePosition();
-          
-          // First check if we're in the intro phase (at the very start of the full cycle)
-          if (position < INTRO_DURATION) {
-            // Should be in intro - only play from start, don't seek
-            currentQuestionIndex = 0;
-            if (position < 500) {
-              // Close enough to start, play the video
-              playIntro(INTRO_DURATION);
-            } else {
-              // Too far in, skip to first question
-              const timeLeft = INTRO_DURATION + QUESTION_DURATION - position;
-              showNextQuestion(timeLeft);
-            }
-            return;
-          }
-          
-          // After intro, calculate which question cycle we're in
-          const positionAfterIntro = position - INTRO_DURATION;
-          const questionCycle = Math.floor(positionAfterIntro / CYCLE_TIME);
-          const positionInQuestion = positionAfterIntro % CYCLE_TIME;
-          
-          currentQuestionIndex = questionCycle;
-          
-          if (positionInQuestion < QUESTION_DURATION) {
-            // Should be showing question
-            const timeLeft = QUESTION_DURATION - positionInQuestion;
-            showNextQuestion(timeLeft);
-          } else if (positionInQuestion < QUESTION_DURATION + FADE_DURATION) {
-            // Should be in fade
-            const timeLeft = (QUESTION_DURATION + FADE_DURATION) - positionInQuestion;
-            startFadeOut(timeLeft);
-          } else if (positionInQuestion < QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) {
-            // Should be in zoltar - skip if too far in
-            const timeLeft = (QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) - positionInQuestion;
-            if (timeLeft > 500) {
-              playZoltar(timeLeft);
-            } else {
-              playArrow(ARROW_DURATION);
-            }
-          } else {
-            // Should be in arrow - skip if too far in
-            const timeLeft = CYCLE_TIME - positionInQuestion;
-            if (timeLeft > 500) {
-              playArrow(timeLeft);
-            } else {
-              currentQuestionIndex++;
-              if (currentQuestionIndex >= questions.length) {
-                currentQuestionIndex = 0;
-                playIntro();
-              } else {
-                showNextQuestion();
-              }
-            }
-          }
-        }
-
         function playVideo(videoEl, src, duration, onDone) {
             if (videoEl.src !== src && !videoEl.src.endsWith(src)) {
                 videoEl.src = src;
@@ -379,7 +301,6 @@
                 onDone();
             });
 
-            // Hard cutoff after duration
             stepTimeout = setTimeout(() => {
                 videoEl.pause();
                 videoEl.style.display = 'none';
@@ -387,82 +308,65 @@
             }, duration);
         }
 
-        // Step 1: Play KAOS_SIGN intro
-        function playIntro(duration = INTRO_DURATION) {
-            currentState = 'intro';
+        // Step 1: Play KAOS_SIGN intro, then go to first ZOLTAR
+        function playIntro() {
             hideAllQuestions();
             signVideo.pause();
             signVideo.style.display = 'none';
 
-            // Reset and prepare video
             introVideo.currentTime = 0;
             introVideo.style.display = 'block';
-            
-            // Try to play
+
             const playPromise = introVideo.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
                     console.log('Intro video playing');
                 }).catch(e => {
                     console.log('Intro play failed:', e);
-                    // Skip to next phase if play fails
                     introVideo.style.display = 'none';
-                    showNextQuestion();
+                    playZoltar();
                     return;
                 });
             }
 
-            // Hard cutoff after duration
             stepTimeout = setTimeout(() => {
                 introVideo.pause();
                 introVideo.style.display = 'none';
-                showNextQuestion();
-            }, duration);
+                playZoltar();
+            }, INTRO_DURATION);
         }
 
-        // Step 2: Show a question for 6 seconds
-        function showNextQuestion(duration = QUESTION_DURATION) {
-            currentState = 'question';
+        // Step 2: Play ZOLTAR_ORANGE_2, then show current question
+        function playZoltar() {
             hideAllQuestions();
+            playVideo(signVideo, '../videos/ZOLTAR_ORANGE_2.mp4', ZOLTAR_DURATION, function() {
+                showQuestion();
+            });
+        }
 
+        // Step 3: Show the current question, then fade out and advance
+        function showQuestion() {
+            hideAllQuestions();
             questions[currentQuestionIndex].classList.add('active');
 
             stepTimeout = setTimeout(() => {
-                startFadeOut();
-            }, duration);
-        }
-        
-        function startFadeOut(duration = FADE_DURATION) {
-            questions[currentQuestionIndex].classList.remove('active');
-            questions[currentQuestionIndex].classList.add('fade-out');
-            stepTimeout = setTimeout(() => {
-                hideAllQuestions();
-                playZoltar();
-            }, duration);
-        }
+                // Fade out
+                questions[currentQuestionIndex].classList.remove('active');
+                questions[currentQuestionIndex].classList.add('fade-out');
 
-        // Step 3: Play ZOLTAR_ORANGE_2
-        function playZoltar(duration = ZOLTAR_DURATION) {
-            currentState = 'zoltar';
-            playVideo(signVideo, '../videos/ZOLTAR_ORANGE_2.mp4', duration, function() {
-                playArrow();
-            });
-        }
-
-        // Step 4: Play down_arrow
-        function playArrow(duration = ARROW_DURATION) {
-            currentState = 'arrow';
-            playVideo(signVideo, '../videos/down_arrow.mp4', duration, function() {
-                // Advance to next question
-                currentQuestionIndex++;
-                if (currentQuestionIndex >= questions.length) {
-                    // All questions done, loop back to intro
-                    currentQuestionIndex = 0;
-                    playIntro();
-                } else {
-                    showNextQuestion();
-                }
-            });
+                stepTimeout = setTimeout(() => {
+                    hideAllQuestions();
+                    // Advance to next question
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex >= questions.length) {
+                        // All questions done, loop back
+                        currentQuestionIndex = 0;
+                        playIntro();
+                    } else {
+                        playZoltar();
+                    }
+                }, FADE_DURATION);
+            }, QUESTION_DURATION);
         }
 
         // Video setup
@@ -472,43 +376,11 @@
         introVideo.playsInline = true;
         signVideo.muted = true;
 
-        // Start: always begin from the first video
+        // Start
         currentQuestionIndex = 0;
-        
-        // Simple start - just play the intro
         setTimeout(() => {
-            console.log('Starting intro video');
-            introVideo.style.display = 'block';
-            introVideo.currentTime = 0;
-            introVideo.play().then(() => {
-                console.log('Intro video playing successfully');
-                setTimeout(() => {
-                    introVideo.pause();
-                    introVideo.style.display = 'none';
-                    showNextQuestion();
-                }, INTRO_DURATION);
-            }).catch(e => {
-                console.error('Intro play failed:', e);
-                introVideo.style.display = 'none';
-                showNextQuestion();
-            });
+            playIntro();
         }, 100);
-        
-        // Remove the resync interval - keep it simple for now
-        /*
-        // Resync every 30 seconds to prevent any drift
-        syncCheckInterval = setInterval(() => {
-          const position = getCurrentCyclePosition();
-          const questionCycle = Math.floor(position / CYCLE_TIME);
-          
-          // Only resync if we've drifted to wrong question
-          if (questionCycle !== currentQuestionIndex) {
-            console.log('Drift detected, resyncing...');
-            clearStep();
-            syncToClockPosition();
-          }
-        }, 30000);
-        */
 
         // Unmute on first click
         document.addEventListener('click', function() {
@@ -520,35 +392,22 @@
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                // Request fullscreen
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(err => {
                         console.log('Fullscreen request failed:', err);
                     });
                 }
-                
-                // Stop everything
+
                 clearStep();
-                if (syncCheckInterval) {
-                    clearInterval(syncCheckInterval);
-                    syncCheckInterval = null;
-                }
-                
-                // Hide and reset videos
                 introVideo.pause();
                 introVideo.style.display = 'none';
                 introVideo.currentTime = 0;
                 signVideo.pause();
                 signVideo.style.display = 'none';
                 signVideo.currentTime = 0;
-                
-                // Hide questions
                 hideAllQuestions();
-                
-                // Reset to beginning
+
                 currentQuestionIndex = 0;
-                
-                // Start fresh from intro
                 setTimeout(() => {
                     playIntro();
                 }, 100);

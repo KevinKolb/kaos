@@ -1,0 +1,559 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../8ball.svg" type="image/svg+xml" onerror="this.style.display='none'">
+    <title>Questions MAGA Hate Ball</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .sky-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #000 0%, #0a0a0f 50%, #000 100%);
+            z-index: 0;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 3px white;
+        }
+
+        .star.twinkle-1 { animation: twinkle1 2s infinite ease-in-out; }
+        .star.twinkle-2 { animation: twinkle2 3s infinite ease-in-out; }
+        .star.twinkle-3 { animation: twinkle3 4s infinite ease-in-out; }
+
+        @keyframes twinkle1 {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        @keyframes twinkle2 {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            30% { opacity: 1; transform: scale(1.3); }
+            70% { opacity: 0.5; transform: scale(1); }
+        }
+
+        @keyframes twinkle3 {
+            0%, 100% { opacity: 0.2; }
+            40% { opacity: 0.8; }
+            60% { opacity: 1; }
+            80% { opacity: 0.4; }
+        }
+
+        .clouds {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        .cloud {
+            position: absolute;
+            background: radial-gradient(ellipse, rgba(30, 30, 35, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(30px);
+        }
+
+        .cloud-layer-1 {
+            animation: drift-1 25s infinite ease-in-out alternate;
+        }
+
+        .cloud-layer-2 {
+            animation: drift-2 30s infinite ease-in-out alternate;
+        }
+
+        .cloud-layer-3 {
+            animation: drift-3 20s infinite ease-in-out alternate;
+        }
+
+        @keyframes drift-1 {
+            0% { transform: translateX(0) translateY(0); opacity: 0.6; }
+            100% { transform: translateX(50px) translateY(20px); opacity: 0.8; }
+        }
+
+        @keyframes drift-2 {
+            0% { transform: translateX(0) translateY(0); opacity: 0.5; }
+            100% { transform: translateX(-40px) translateY(30px); opacity: 0.7; }
+        }
+
+        @keyframes drift-3 {
+            0% { transform: translateX(0) translateY(0); opacity: 0.7; }
+            100% { transform: translateX(30px) translateY(-20px); opacity: 0.5; }
+        }
+
+        .question-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .question {
+            font-family: 'Arial Black', sans-serif;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            transition: opacity 1s ease;
+            position: absolute;
+            text-align: center;
+            padding: 2vw;
+            line-height: 1.05;
+            width: 96vw;
+            max-height: 94vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .question.active {
+            opacity: 1;
+        }
+
+        .question.fade-out {
+            opacity: 0;
+        }
+
+        .mystical-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(60, 60, 80, 0.15) 0%, transparent 70%);
+            z-index: 4;
+            animation: pulse-glow 4s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sky-background"></div>
+    <div class="stars" id="stars"></div>
+    <div class="clouds" id="clouds"></div>
+    <div class="mystical-glow"></div>
+
+    <video id="intro-video" muted playsinline preload="auto" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 30; display: none;">
+        <source src="../videos/KAOS_SIGN.mp4" type="video/mp4">
+    </video>
+
+    <video id="signVideo" muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 20; display: none;"></video>
+
+    <div class="question-container">
+        <div class="question">Should We Invade Canada?</div>
+        <div class="question">Did I Leave Anything On Epstein's Island?</div>
+        <div class="question">Doesn't Bleach Cure COVID?</div>
+        <div class="question">Should Women Really Be Allowed To Vote?</div>
+        <div class="question">Should We Invade Greenland?</div>
+        <div class="question">Is Democracy Overrated?</div>
+        <div class="question">Are Term Limits Really Necessary?</div>
+        <div class="question">Is Voting Overrated?</div>
+        <div class="question">Should I Build A Trump Tower In Gaza?</div>
+        <div class="question">Is America Great Again Yet?</div>
+        <div class="question">Can I Pardon Myself, Forever?</div>
+        <div class="question">Will You Deport My Baby?</div>
+        <div class="question">Will ICE Agents Ever Show Their Faces?</div>
+        <div class="question">Are Our First Amendment Rights Safe??</div>
+    <script>
+        // Generate stars
+        const starsContainer = document.getElementById('stars');
+        const twinkleClasses = ['twinkle-1', 'twinkle-2', 'twinkle-3'];
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star ' + twinkleClasses[Math.floor(Math.random() * 3)];
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            const size = Math.random() * 3 + 1;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.animationDelay = Math.random() * 5 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // Generate clouds
+        const cloudsContainer = document.getElementById('clouds');
+        const cloudLayers = ['cloud-layer-1', 'cloud-layer-2', 'cloud-layer-3'];
+        for (let i = 0; i < 15; i++) {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud ' + cloudLayers[i % 3];
+            cloud.style.left = (Math.random() * 120 - 10) + '%';
+            cloud.style.top = (Math.random() * 120 - 10) + '%';
+            const size = Math.random() * 400 + 200;
+            cloud.style.width = size + 'px';
+            cloud.style.height = (size * 0.6) + 'px';
+            cloud.style.animationDelay = Math.random() * 10 + 's';
+            cloudsContainer.appendChild(cloud);
+        }
+
+        // Question rotation
+        const questions = document.querySelectorAll('.question');
+        const introVideo = document.getElementById('intro-video');
+        const signVideo = document.getElementById('signVideo');
+        let currentQuestionIndex = 0;
+        let stepTimeout = null;
+
+        // The sequence for each question is:
+        // Show Question -> play ZOLTAR_ORANGE_2 -> play down_arrow -> next question
+        // After all questions: play KAOS_SIGN (intro) and restart
+
+        // States: 'intro', 'question', 'zoltar', 'arrow'
+        let currentState = 'intro';
+
+        // Calculate optimal font size based on text length and viewport
+        function fitTextToScreen(element) {
+            const text = element.textContent;
+            const charCount = text.length;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            let fontSize;
+            if (charCount <= 15) {
+                fontSize = vw * 0.18;
+            } else if (charCount <= 25) {
+                fontSize = vw * 0.12;
+            } else if (charCount <= 35) {
+                fontSize = vw * 0.09;
+            } else if (charCount <= 50) {
+                fontSize = vw * 0.07;
+            } else {
+                fontSize = vw * 0.055;
+            }
+
+            const maxByHeight = vh * 0.25;
+            fontSize = Math.min(fontSize, maxByHeight);
+            element.style.fontSize = fontSize + 'px';
+        }
+
+        function fitAllQuestions() {
+            questions.forEach(q => fitTextToScreen(q));
+        }
+
+        fitAllQuestions();
+        window.addEventListener('resize', fitAllQuestions);
+
+        function hideAllQuestions() {
+            questions.forEach(q => {
+                q.classList.remove('active', 'fade-out');
+            });
+        }
+
+        function clearStep() {
+            if (stepTimeout) {
+                clearTimeout(stepTimeout);
+                stepTimeout = null;
+            }
+        }
+
+        // Hard-coded durations (ms) - keeps both screens in sync
+        const INTRO_DURATION = 6000;    // KAOS_SIGN.mp4
+        const QUESTION_DURATION = 6000; // question text display
+        const FADE_DURATION = 1000;     // question fade-out
+        const ZOLTAR_DURATION = 6000;   // ZOLTAR_ORANGE_2.mp4
+        const ARROW_DURATION = 6000;    // down_arrow.mp4
+        
+        // Total cycle time per question (no intro before each question)
+        const CYCLE_TIME = QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION + ARROW_DURATION; // 19000ms
+        const TOTAL_CYCLE = INTRO_DURATION + (CYCLE_TIME * questions.length); // Full loop with intro at start
+        
+        // Clock-based sync
+        let syncCheckInterval = null;
+        
+        function getCurrentCyclePosition() {
+          const now = Date.now();
+          const positionInCycle = now % TOTAL_CYCLE;
+          return positionInCycle;
+        }
+        
+        function syncToClockPosition() {
+          const position = getCurrentCyclePosition();
+          
+          // First check if we're in the intro phase (at the very start of the full cycle)
+          if (position < INTRO_DURATION) {
+            // Should be in intro - only play from start, don't seek
+            currentQuestionIndex = 0;
+            if (position < 500) {
+              // Close enough to start, play the video
+              playIntro(INTRO_DURATION);
+            } else {
+              // Too far in, skip to first question
+              const timeLeft = INTRO_DURATION + QUESTION_DURATION - position;
+              showNextQuestion(timeLeft);
+            }
+            return;
+          }
+          
+          // After intro, calculate which question cycle we're in
+          const positionAfterIntro = position - INTRO_DURATION;
+          const questionCycle = Math.floor(positionAfterIntro / CYCLE_TIME);
+          const positionInQuestion = positionAfterIntro % CYCLE_TIME;
+          
+          currentQuestionIndex = questionCycle;
+          
+          if (positionInQuestion < QUESTION_DURATION) {
+            // Should be showing question
+            const timeLeft = QUESTION_DURATION - positionInQuestion;
+            showNextQuestion(timeLeft);
+          } else if (positionInQuestion < QUESTION_DURATION + FADE_DURATION) {
+            // Should be in fade
+            const timeLeft = (QUESTION_DURATION + FADE_DURATION) - positionInQuestion;
+            startFadeOut(timeLeft);
+          } else if (positionInQuestion < QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) {
+            // Should be in zoltar - skip if too far in
+            const timeLeft = (QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) - positionInQuestion;
+            if (timeLeft > 500) {
+              playZoltar(timeLeft);
+            } else {
+              playArrow(ARROW_DURATION);
+            }
+          } else {
+            // Should be in arrow - skip if too far in
+            const timeLeft = CYCLE_TIME - positionInQuestion;
+            if (timeLeft > 500) {
+              playArrow(timeLeft);
+            } else {
+              currentQuestionIndex++;
+              if (currentQuestionIndex >= questions.length) {
+                currentQuestionIndex = 0;
+                playIntro();
+              } else {
+                showNextQuestion();
+              }
+            }
+          }
+        }
+
+        function playVideo(videoEl, src, duration, onDone) {
+            if (videoEl.src !== src && !videoEl.src.endsWith(src)) {
+                videoEl.src = src;
+            }
+            videoEl.style.display = 'block';
+            videoEl.currentTime = 0;
+            videoEl.play().catch(e => {
+                console.log('Video play failed:', e);
+                videoEl.style.display = 'none';
+                onDone();
+            });
+
+            // Hard cutoff after duration
+            stepTimeout = setTimeout(() => {
+                videoEl.pause();
+                videoEl.style.display = 'none';
+                onDone();
+            }, duration);
+        }
+
+        // Step 1: Play KAOS_SIGN intro
+        function playIntro(duration = INTRO_DURATION) {
+            currentState = 'intro';
+            hideAllQuestions();
+            signVideo.pause();
+            signVideo.style.display = 'none';
+
+            // Reset and prepare video
+            introVideo.currentTime = 0;
+            introVideo.style.display = 'block';
+            
+            // Try to play
+            const playPromise = introVideo.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Intro video playing');
+                }).catch(e => {
+                    console.log('Intro play failed:', e);
+                    // Skip to next phase if play fails
+                    introVideo.style.display = 'none';
+                    showNextQuestion();
+                    return;
+                });
+            }
+
+            // Hard cutoff after duration
+            stepTimeout = setTimeout(() => {
+                introVideo.pause();
+                introVideo.style.display = 'none';
+                showNextQuestion();
+            }, duration);
+        }
+
+        // Step 2: Show a question for 6 seconds
+        function showNextQuestion(duration = QUESTION_DURATION) {
+            currentState = 'question';
+            hideAllQuestions();
+
+            questions[currentQuestionIndex].classList.add('active');
+
+            stepTimeout = setTimeout(() => {
+                startFadeOut();
+            }, duration);
+        }
+        
+        function startFadeOut(duration = FADE_DURATION) {
+            questions[currentQuestionIndex].classList.remove('active');
+            questions[currentQuestionIndex].classList.add('fade-out');
+            stepTimeout = setTimeout(() => {
+                hideAllQuestions();
+                playZoltar();
+            }, duration);
+        }
+
+        // Step 3: Play ZOLTAR_ORANGE_2
+        function playZoltar(duration = ZOLTAR_DURATION) {
+            currentState = 'zoltar';
+            playVideo(signVideo, '../videos/ZOLTAR_ORANGE_2.mp4', duration, function() {
+                playArrow();
+            });
+        }
+
+        // Step 4: Play down_arrow
+        function playArrow(duration = ARROW_DURATION) {
+            currentState = 'arrow';
+            playVideo(signVideo, '../videos/down_arrow.mp4', duration, function() {
+                // Advance to next question
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= questions.length) {
+                    // All questions done, loop back to intro
+                    currentQuestionIndex = 0;
+                    playIntro();
+                } else {
+                    showNextQuestion();
+                }
+            });
+        }
+
+        // Video setup
+        introVideo.muted = true;
+        introVideo.setAttribute('muted', '');
+        introVideo.setAttribute('playsinline', '');
+        introVideo.playsInline = true;
+        signVideo.muted = true;
+
+        // Start: always begin from the first video
+        currentQuestionIndex = 0;
+        
+        // Simple start - just play the intro
+        setTimeout(() => {
+            console.log('Starting intro video');
+            introVideo.style.display = 'block';
+            introVideo.currentTime = 0;
+            introVideo.play().then(() => {
+                console.log('Intro video playing successfully');
+                setTimeout(() => {
+                    introVideo.pause();
+                    introVideo.style.display = 'none';
+                    showNextQuestion();
+                }, INTRO_DURATION);
+            }).catch(e => {
+                console.error('Intro play failed:', e);
+                introVideo.style.display = 'none';
+                showNextQuestion();
+            });
+        }, 100);
+        
+        // Remove the resync interval - keep it simple for now
+        /*
+        // Resync every 30 seconds to prevent any drift
+        syncCheckInterval = setInterval(() => {
+          const position = getCurrentCyclePosition();
+          const questionCycle = Math.floor(position / CYCLE_TIME);
+          
+          // Only resync if we've drifted to wrong question
+          if (questionCycle !== currentQuestionIndex) {
+            console.log('Drift detected, resyncing...');
+            clearStep();
+            syncToClockPosition();
+          }
+        }, 30000);
+        */
+
+        // Unmute on first click
+        document.addEventListener('click', function() {
+            signVideo.muted = false;
+            introVideo.muted = false;
+        }, { once: true });
+
+        // Spacebar restarts from beginning and requests fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                // Request fullscreen
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Fullscreen request failed:', err);
+                    });
+                }
+                
+                // Stop everything
+                clearStep();
+                if (syncCheckInterval) {
+                    clearInterval(syncCheckInterval);
+                    syncCheckInterval = null;
+                }
+                
+                // Hide and reset videos
+                introVideo.pause();
+                introVideo.style.display = 'none';
+                introVideo.currentTime = 0;
+                signVideo.pause();
+                signVideo.style.display = 'none';
+                signVideo.currentTime = 0;
+                
+                // Hide questions
+                hideAllQuestions();
+                
+                // Reset to beginning
+                currentQuestionIndex = 0;
+                
+                // Start fresh from intro
+                setTimeout(() => {
+                    playIntro();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

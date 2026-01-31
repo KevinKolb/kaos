@@ -159,10 +159,9 @@ html, body {
     { text: "WHAT A STUPID|QUESTION", align: "center" }
   ];
 
-  // Flow: kaos_water video > bubbles pause > Answer 1 > bubbles pause > Answer 2 > ... > loop
-  // States: 'video', 'bubbles', 'answer'
+  // Sequence: KAOS_water → [BUBBLES → ANSWER] × N → repeat
+  // Matches questions page: KAOS_SIGN → [ZOLTAR → QUESTION] × N → repeat
   let currentAnswerIndex = 0;
-  let currentState = 'video';
   let stepTimeout = null;
   let outroTimeout = null;
   let bubbleInterval = null;
@@ -207,19 +206,10 @@ html, body {
     }
   }
 
-  // Hard-coded durations (ms) - keeps both screens in sync
-  const VIDEO_DURATION = 6000;          // kaos_water.mp4 (matches KAOS_SIGN.mp4)
-  const BUBBLE_BEFORE_ANSWER = 7000;    // bubbles only - matches question (6s) + fade (1s)
-  const BUBBLE_CONTINUED = 6000;        // bubbles only continued - matches ZOLTAR_ORANGE_2.mp4
-  const ANSWER_DURATION = 6000;         // answer display with bubbles - matches down_arrow.mp4
-  
-  // Per-answer cycle time (no video between answers)
-  const ANSWER_CYCLE_TIME = BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED + ANSWER_DURATION; // 19000ms
-  // Full loop: video plays once, then all answers cycle
-  const TOTAL_CYCLE = VIDEO_DURATION + ANSWER_CYCLE_TIME * textsWithRatings.length; // 272000ms
-  
-  // Clock-based sync: calculate position in cycle from system time
-  let syncCheckInterval = null;
+  // Durations (ms) - match questions page timing
+  const VIDEO_DURATION = 6000;     // kaos_water.mp4 (matches KAOS_SIGN)
+  const BUBBLES_DURATION = 6000;   // bubbles only (matches ZOLTAR_ORANGE_2)
+  const ANSWER_DURATION = 7000;    // answer display + outro (matches Question 6s + fade 1s)
 
   function clearTimers() {
     clearTimeout(stepTimeout);
@@ -227,126 +217,43 @@ html, body {
     stepTimeout = null;
     outroTimeout = null;
   }
-  
-  function getCurrentCyclePosition() {
-    const now = Date.now();
-    const positionInCycle = now % TOTAL_CYCLE;
-    return positionInCycle;
-  }
-  
-  function syncToClockPosition() {
-    const position = getCurrentCyclePosition();
 
-    if (position < VIDEO_DURATION) {
-      // Should be in video phase (only at start of loop)
-      if (position < 500) {
-        currentAnswerIndex = 0;
-        playKaosWater(VIDEO_DURATION - position);
-      } else {
-        // Too far into video, skip to first answer's bubble phase
-        currentAnswerIndex = 0;
-        const timeLeft = VIDEO_DURATION + BUBBLE_BEFORE_ANSWER - position;
-        ensureBubbles();
-        showBubblePause('before', timeLeft);
-      }
-      return;
-    }
-
-    // Past the video: determine which answer and phase
-    const posAfterVideo = position - VIDEO_DURATION;
-    const answerCycle = Math.floor(posAfterVideo / ANSWER_CYCLE_TIME);
-    const posInAnswer = posAfterVideo % ANSWER_CYCLE_TIME;
-
-    currentAnswerIndex = answerCycle;
-
-    if (posInAnswer < BUBBLE_BEFORE_ANSWER) {
-      // In first bubble pause (during question)
-      const timeLeft = BUBBLE_BEFORE_ANSWER - posInAnswer;
-      ensureBubbles();
-      showBubblePause('before', timeLeft);
-    } else if (posInAnswer < BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) {
-      // In continued bubble pause (during zoltar)
-      const timeLeft = (BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) - posInAnswer;
-      ensureBubbles();
-      showBubblePause('continued', timeLeft);
-    } else {
-      // In answer display (during down_arrow)
-      const timeLeft = ANSWER_CYCLE_TIME - posInAnswer;
-      ensureBubbles();
-      showAnswer(timeLeft);
-    }
-  }
-
-  // Step 1: Play kaos_water video
-  function playKaosWater(duration = VIDEO_DURATION) {
-    currentState = 'video';
+  // Step 1: Play kaos_water video, then go to first bubbles
+  function playKaosWater() {
     clearTimers();
-
-    // Hide any text
     zoomText.style.opacity = '0';
     zoomText.style.transition = 'none';
 
-    // Show and play video from start
     introVideo.style.display = 'block';
     introVideo.currentTime = 0;
-    
+
     introVideo.play().catch(e => {
       console.log('Video play failed:', e);
-      // If play fails, skip to next phase
       introVideo.style.display = 'none';
       ensureBubbles();
-      showBubblePause('before');
+      showBubbles();
     });
 
-    // Hard cutoff after duration
     stepTimeout = setTimeout(() => {
       introVideo.pause();
       introVideo.style.display = 'none';
       ensureBubbles();
-      showBubblePause('before');
-    }, duration);
+      showBubbles();
+    }, VIDEO_DURATION);
   }
 
-  // Step 2: Bubbles-only pause (before answer, continued, or after)
-  function showBubblePause(phase, duration = null) {
-    currentState = 'bubbles';
-
-    // Make sure text is hidden
+  // Step 2: Bubbles-only pause (matches ZOLTAR), then show answer
+  function showBubbles() {
     zoomText.style.opacity = '0';
     zoomText.style.transition = 'none';
-    
-    // Use appropriate duration based on phase
-    if (duration === null) {
-      if (phase === 'before') {
-        duration = BUBBLE_BEFORE_ANSWER;
-      } else if (phase === 'continued') {
-        duration = BUBBLE_CONTINUED;
-      }
-    }
 
     stepTimeout = setTimeout(() => {
-      if (phase === 'before') {
-        // After first bubble pause: go to continued bubbles
-        showBubblePause('continued');
-      } else if (phase === 'continued') {
-        // After continued bubble pause: show answer
-        showAnswer();
-      } else {
-        // After answer: advance to next answer or loop
-        currentAnswerIndex++;
-        if (currentAnswerIndex >= textsWithRatings.length) {
-          currentAnswerIndex = 0;
-          playKaosWater();
-        } else {
-          showBubblePause('before');
-        }
-      }
-    }, duration);
+      showAnswer();
+    }, BUBBLES_DURATION);
   }
 
-  // Step 3: Show answer text
-  function showAnswer(duration = ANSWER_DURATION) {
-    currentState = 'answer';
+  // Step 3: Show answer text, then fade out and advance
+  function showAnswer() {
     const item = textsWithRatings[currentAnswerIndex];
 
     const hasPipes = item.text.includes("|");
@@ -354,53 +261,41 @@ html, body {
     const useWordWrap = !hasPipes && lines.length >= 4;
     const processedLines = useWordWrap ? findBestLineBreaks(lines) : lines;
 
-    const elapsed = ANSWER_DURATION - duration;
-    const introDone = elapsed >= 1500;
-    
     zoomText.innerHTML = processedLines.map(line => `<span class="word">${line}</span>`).join("");
     zoomText.style.fontSize = item.fontSize || getTextStyle(processedLines, false).size;
 
-    if (!introDone) {
-      // Still in intro phase
-      zoomText.style.transition = "none";
-      zoomText.style.filter = "blur(20px)";
-      zoomText.style.opacity = "0";
-      zoomText.style.transform = "translate(-50%, 0) scale(0.6) rotate(-8deg)";
-      
-      setTimeout(() => {
-        zoomText.style.transition = "filter 1.5s ease-out, opacity 1.5s ease-out, transform 1.5s ease-out";
-        zoomText.style.filter = "blur(0)";
-        zoomText.style.opacity = "1";
-        zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
-      }, 10);
-    } else {
-      // Already past intro, show immediately
-      zoomText.style.transition = "none";
+    // Intro: blur in
+    zoomText.style.transition = "none";
+    zoomText.style.filter = "blur(20px)";
+    zoomText.style.opacity = "0";
+    zoomText.style.transform = "translate(-50%, 0) scale(0.6) rotate(-8deg)";
+
+    setTimeout(() => {
+      zoomText.style.transition = "filter 1.5s ease-out, opacity 1.5s ease-out, transform 1.5s ease-out";
       zoomText.style.filter = "blur(0)";
       zoomText.style.opacity = "1";
       zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
-    }
+    }, 10);
 
-    // Outro transition
-    const outroDelay = Math.max(0, duration - 1500);
+    // Outro: blur out 1.5s before end
     outroTimeout = setTimeout(() => {
       const exitRotate = Math.random() * 30 - 15;
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
       zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
-    }, outroDelay);
+    }, ANSWER_DURATION - 1500);
 
-    // After remaining duration, advance to next cycle
+    // Advance after answer duration
     stepTimeout = setTimeout(() => {
       currentAnswerIndex++;
       if (currentAnswerIndex >= textsWithRatings.length) {
         currentAnswerIndex = 0;
         playKaosWater();
       } else {
-        showBubblePause('before');
+        showBubbles();
       }
-    }, duration);
+    }, ANSWER_DURATION);
   }
 
   // Text sizing helpers
@@ -482,43 +377,31 @@ html, body {
     return bestLines;
   }
 
-  // Spacebar restarts from beginning and makes Chrome fullscreen
+  // Spacebar restarts from beginning and requests fullscreen
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
       e.preventDefault();
-      
-      // Request fullscreen
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => {
           console.log('Fullscreen request failed:', err);
         });
       }
-      
-      // Stop everything
+
       clearTimers();
       if (bubbleInterval) {
         clearInterval(bubbleInterval);
         bubbleInterval = null;
       }
-      if (syncCheckInterval) {
-        clearInterval(syncCheckInterval);
-        syncCheckInterval = null;
-      }
-      
-      // Hide and reset video
+
       introVideo.pause();
       introVideo.style.display = 'none';
       introVideo.currentTime = 0;
-      
-      // Clear any displayed text
+
       zoomText.style.opacity = '0';
       zoomText.style.transition = 'none';
       zoomText.innerHTML = '';
-      
-      // Reset to beginning
+
       currentAnswerIndex = 0;
-      
-      // Start fresh from video
       setTimeout(() => {
         playKaosWater();
       }, 100);
@@ -532,34 +415,12 @@ html, body {
   introVideo.setAttribute('webkit-playsinline', '');
   introVideo.playsInline = true;
 
-  // Start: always begin from the first video
+  // Start
   introVideo.load();
   currentAnswerIndex = 0;
-  
-  // Wait a moment for video to be ready, then start
   setTimeout(() => {
     playKaosWater();
   }, 100);
-  
-  // Resync every 30 seconds to prevent any drift
-  syncCheckInterval = setInterval(() => {
-    const position = getCurrentCyclePosition();
-
-    // Determine expected answer index from clock
-    let expectedIndex;
-    if (position < VIDEO_DURATION) {
-      expectedIndex = 0;
-    } else {
-      expectedIndex = Math.floor((position - VIDEO_DURATION) / ANSWER_CYCLE_TIME);
-    }
-
-    // Only resync if we've drifted to wrong answer
-    if (expectedIndex !== currentAnswerIndex) {
-      console.log('Drift detected, resyncing...');
-      clearTimers();
-      syncToClockPosition();
-    }
-  }, 30000);
 </script>
 </body>
 </html>
