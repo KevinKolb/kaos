@@ -296,9 +296,9 @@
         const ZOLTAR_DURATION = 6000;   // ZOLTAR_ORANGE_2.mp4
         const ARROW_DURATION = 6000;    // down_arrow.mp4
         
-        // Total cycle time per question (no intro before each question)
-        const CYCLE_TIME = QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION + ARROW_DURATION; // 19000ms
-        const TOTAL_CYCLE = INTRO_DURATION + (CYCLE_TIME * questions.length); // Full loop with intro at start
+        // Total cycle time per question
+        const CYCLE_TIME = INTRO_DURATION + QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION + ARROW_DURATION; // 25000ms
+        const TOTAL_CYCLE = CYCLE_TIME * questions.length; // Full loop
         
         // Clock-based sync
         let syncCheckInterval = null;
@@ -312,39 +312,33 @@
         function syncToClockPosition() {
           const position = getCurrentCyclePosition();
           
-          // First check if we're in the intro phase (at the very start of the full cycle)
-          if (position < INTRO_DURATION) {
-            // Should be in intro - only play from start, don't seek
-            currentQuestionIndex = 0;
-            if (position < 500) {
-              // Close enough to start, play the video
-              playIntro(INTRO_DURATION);
-            } else {
-              // Too far in, skip to first question
-              const timeLeft = INTRO_DURATION + QUESTION_DURATION - position;
-              showNextQuestion(timeLeft);
-            }
-            return;
-          }
-          
-          // After intro, calculate which question cycle we're in
-          const positionAfterIntro = position - INTRO_DURATION;
-          const questionCycle = Math.floor(positionAfterIntro / CYCLE_TIME);
-          const positionInQuestion = positionAfterIntro % CYCLE_TIME;
+          // Determine which question and what phase we should be in
+          const questionCycle = Math.floor(position / CYCLE_TIME);
+          const positionInQuestion = position % CYCLE_TIME;
           
           currentQuestionIndex = questionCycle;
           
-          if (positionInQuestion < QUESTION_DURATION) {
+          if (positionInQuestion < INTRO_DURATION) {
+            // Should be in intro - only play from start, don't seek
+            if (positionInQuestion < 500) {
+              // Close enough to start, play the video
+              playIntro(INTRO_DURATION);
+            } else {
+              // Too far in, skip to next phase
+              const timeLeft = (INTRO_DURATION + QUESTION_DURATION) - positionInQuestion;
+              showNextQuestion(timeLeft);
+            }
+          } else if (positionInQuestion < INTRO_DURATION + QUESTION_DURATION) {
             // Should be showing question
-            const timeLeft = QUESTION_DURATION - positionInQuestion;
+            const timeLeft = (INTRO_DURATION + QUESTION_DURATION) - positionInQuestion;
             showNextQuestion(timeLeft);
-          } else if (positionInQuestion < QUESTION_DURATION + FADE_DURATION) {
+          } else if (positionInQuestion < INTRO_DURATION + QUESTION_DURATION + FADE_DURATION) {
             // Should be in fade
-            const timeLeft = (QUESTION_DURATION + FADE_DURATION) - positionInQuestion;
+            const timeLeft = (INTRO_DURATION + QUESTION_DURATION + FADE_DURATION) - positionInQuestion;
             startFadeOut(timeLeft);
-          } else if (positionInQuestion < QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) {
+          } else if (positionInQuestion < INTRO_DURATION + QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) {
             // Should be in zoltar - skip if too far in
-            const timeLeft = (QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) - positionInQuestion;
+            const timeLeft = (INTRO_DURATION + QUESTION_DURATION + FADE_DURATION + ZOLTAR_DURATION) - positionInQuestion;
             if (timeLeft > 500) {
               playZoltar(timeLeft);
             } else {
