@@ -176,12 +176,24 @@ class MouseHider:
             self.hidden = False
             
             # Restore ALL system cursors to default
+            print("Restoring all system cursors...")
             user32.SystemParametersInfoW(0x0057, 0, None, 0)  # SPI_SETCURSORS
             
-            # Force refresh
+            # Reload from registry to ensure clean state
+            user32.SystemParametersInfoW(0x0057, 0, None, 2)  # SPIF_SENDCHANGE
+            
+            # Force refresh and set arrow cursor
             time.sleep(0.1)
             hCursor = user32.LoadCursorW(0, 32512)  # IDC_ARROW
             user32.SetCursor(hCursor)
+            
+            # Destroy our blank cursor handle to free resources
+            if self.blank_cursor:
+                try:
+                    user32.DestroyCursor(self.blank_cursor)
+                    self.blank_cursor = None
+                except:
+                    pass
             
             self.update_icon_title()
             print(">>> MOUSE CURSOR VISIBLE <<<")
@@ -207,11 +219,40 @@ class MouseHider:
     def quit_app(self, icon, item):
         print("Quitting...")
         self.running = False
+        
+        # Full cleanup and reset
         if self.hidden:
             self.show_cursor()
+        
+        # Force restore all system cursors regardless of state
+        print("Forcing full cursor restoration...")
+        user32.SystemParametersInfoW(0x0057, 0, None, 0)  # SPI_SETCURSORS
+        
+        # Reload system cursors from registry
+        user32.SystemParametersInfoW(0x0057, 0, None, 2)  # SPIF_SENDCHANGE
+        
+        # Force set arrow cursor
+        hCursor = user32.LoadCursorW(0, 32512)  # IDC_ARROW
+        user32.SetCursor(hCursor)
+        
+        # Clean up temporary cursor file if it exists
+        if self.blank_cursor:
+            try:
+                temp_dir = tempfile.gettempdir()
+                ico_path = os.path.join(temp_dir, 'blank_cursor.ico')
+                if os.path.exists(ico_path):
+                    time.sleep(0.2)  # Give system time to release file
+                    try:
+                        os.remove(ico_path)
+                    except:
+                        pass
+            except Exception as e:
+                print(f"Error cleaning up cursor file: {e}")
+        
         user32.UnregisterHotKey(None, 1)
         user32.UnregisterHotKey(None, 2)
         icon.stop()
+        print("Cleanup complete. Ready to run again.")
         sys.exit(0)
     
     def on_toggle_from_menu(self, icon, item):
@@ -267,11 +308,20 @@ def main():
                 user32.DispatchMessageW(ctypes.byref(msg))
             else:
                 time.sleep(0.01)
+    except KeyboardInterrupt:
+        print("\nCaught interrupt, cleaning up...")
     finally:
+        print("Performing final cleanup...")
         user32.UnregisterHotKey(None, 1)
         user32.UnregisterHotKey(None, 2)
         if hider.hidden:
             hider.show_cursor()
+        
+        # Final full reset of all system cursors
+        user32.SystemParametersInfoW(0x0057, 0, None, 0)  # SPI_SETCURSORS
+        user32.SystemParametersInfoW(0x0057, 0, None, 2)  # SPIF_SENDCHANGE
+        
+        print("Application fully reset and ready to restart.")
 
 if __name__ == "__main__":
     main()
