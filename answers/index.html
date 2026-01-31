@@ -159,7 +159,6 @@ html, body {
   // States: 'video', 'bubbles', 'answer'
   let currentAnswerIndex = 0;
   let currentState = 'video';
-  let frozen = false;
   let stepTimeout = null;
   let outroTimeout = null;
   let bubbleInterval = null;
@@ -235,7 +234,7 @@ html, body {
       introVideo.pause();
       introVideo.style.display = 'none';
       ensureBubbles();
-      if (!frozen) showBubblePause(true);
+      showBubblePause(true);
     }, VIDEO_DURATION);
   }
 
@@ -248,18 +247,16 @@ html, body {
     zoomText.style.transition = 'none';
 
     stepTimeout = setTimeout(() => {
-      if (!frozen) {
-        if (beforeAnswer) {
-          showAnswer();
+      if (beforeAnswer) {
+        showAnswer();
+      } else {
+        // After an answer: advance to next answer or loop
+        currentAnswerIndex++;
+        if (currentAnswerIndex >= textsWithRatings.length) {
+          currentAnswerIndex = 0;
+          playKaosWater();
         } else {
-          // After an answer: advance to next answer or loop
-          currentAnswerIndex++;
-          if (currentAnswerIndex >= textsWithRatings.length) {
-            currentAnswerIndex = 0;
-            playKaosWater();
-          } else {
-            showAnswer();
-          }
+          showAnswer();
         }
       }
     }, BUBBLE_DURATION);
@@ -300,22 +297,8 @@ html, body {
 
     // After fixed answer duration, go to bubble pause
     stepTimeout = setTimeout(() => {
-      if (!frozen) showBubblePause(false);
+      showBubblePause(false);
     }, ANSWER_DURATION);
-  }
-
-  // Navigate manually
-  function goToAnswer(index) {
-    clearTimers();
-    introVideo.pause();
-    introVideo.style.display = 'none';
-    ensureBubbles();
-
-    if (index < 0) index = textsWithRatings.length - 1;
-    if (index >= textsWithRatings.length) index = 0;
-
-    currentAnswerIndex = index;
-    showAnswer();
   }
 
   // Text sizing helpers
@@ -397,44 +380,11 @@ html, body {
     return bestLines;
   }
 
-  // Keyboard handler
-  function handleKey(code) {
-    if (code === 'Space') {
-      frozen = !frozen;
-      if (frozen) {
-        clearTimers();
-        if (currentState === 'video') introVideo.pause();
-      } else {
-        if (currentState === 'video') {
-          introVideo.play();
-        } else if (currentState === 'answer') {
-          showAnswer();
-        } else {
-          showBubblePause(true);
-        }
-      }
-    }
-    if (code === 'ArrowRight') {
-      frozen = false;
-      goToAnswer(currentAnswerIndex + 1);
-    }
-    if (code === 'ArrowLeft') {
-      frozen = false;
-      goToAnswer(currentAnswerIndex - 1);
-    }
-  }
-
+  // Spacebar refreshes the page
   document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+    if (e.code === 'Space') {
       e.preventDefault();
-      handleKey(e.code);
-    }
-  });
-
-  // Listen for forwarded keys from parent frame
-  window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'kaos-key') {
-      handleKey(e.data.code);
+      location.reload();
     }
   });
 
@@ -458,7 +408,7 @@ html, body {
     introVideo.pause();
     introVideo.style.display = 'none';
     ensureBubbles();
-    if (!frozen) showBubblePause(true);
+    showBubblePause(true);
   }, VIDEO_DURATION);
 </script>
 </body>

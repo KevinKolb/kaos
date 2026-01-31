@@ -1,0 +1,10 @@
+{
+    // Set the default browser for opening files
+    "open-in-browser.default": "Chrome",
+    
+    // Configure Live Server to use Chrome
+    "liveServer.settings.CustomBrowser": "chrome",
+    
+    // Simple Browser settings
+    "simpleBrowser.focusLockIndicator.enabled": true
+}

@@ -1,0 +1,8 @@
+[
+    {
+        "key": "ctrl+1",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Open in Chrome",
+        "when": "editorTextFocus"
+    }
+]

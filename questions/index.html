@@ -234,7 +234,6 @@
         const introVideo = document.getElementById('intro-video');
         const signVideo = document.getElementById('signVideo');
         let currentQuestionIndex = 0;
-        let frozen = false;
         let stepTimeout = null;
 
         // The sequence for each question is:
@@ -306,7 +305,7 @@
             stepTimeout = setTimeout(() => {
                 videoEl.pause();
                 videoEl.style.display = 'none';
-                if (!frozen) onDone();
+                onDone();
             }, duration);
         }
 
@@ -325,7 +324,7 @@
             stepTimeout = setTimeout(() => {
                 introVideo.pause();
                 introVideo.style.display = 'none';
-                if (!frozen) showNextQuestion();
+                showNextQuestion();
             }, INTRO_DURATION);
         }
 
@@ -337,15 +336,13 @@
             questions[currentQuestionIndex].classList.add('active');
 
             stepTimeout = setTimeout(() => {
-                if (!frozen) {
-                    // Fade out question, then play zoltar
-                    questions[currentQuestionIndex].classList.remove('active');
-                    questions[currentQuestionIndex].classList.add('fade-out');
-                    setTimeout(() => {
-                        hideAllQuestions();
-                        playZoltar();
-                    }, FADE_DURATION);
-                }
+                // Fade out question, then play zoltar
+                questions[currentQuestionIndex].classList.remove('active');
+                questions[currentQuestionIndex].classList.add('fade-out');
+                setTimeout(() => {
+                    hideAllQuestions();
+                    playZoltar();
+                }, FADE_DURATION);
             }, QUESTION_DURATION);
         }
 
@@ -373,22 +370,6 @@
             });
         }
 
-        // Navigate to a specific step manually
-        function goToQuestion(index) {
-            clearStep();
-            signVideo.pause();
-            signVideo.style.display = 'none';
-            introVideo.pause();
-            introVideo.style.display = 'none';
-            hideAllQuestions();
-
-            if (index < 0) index = questions.length - 1;
-            if (index >= questions.length) index = 0;
-
-            currentQuestionIndex = index;
-            showNextQuestion();
-        }
-
         // Start: play intro video with hard-coded cutoff
         introVideo.play().catch(() => {
             introVideo.style.display = 'none';
@@ -399,7 +380,7 @@
         stepTimeout = setTimeout(() => {
             introVideo.pause();
             introVideo.style.display = 'none';
-            if (!frozen) showNextQuestion();
+            showNextQuestion();
         }, INTRO_DURATION);
 
         // Unmute on first click
@@ -408,49 +389,17 @@
             introVideo.muted = false;
         }, { once: true });
 
-        // Keyboard handler
-        function handleKey(code) {
-            if (code === 'Space') {
-                frozen = !frozen;
-                if (frozen) {
-                    clearStep();
-                    if (currentState === 'zoltar' || currentState === 'arrow') {
-                        signVideo.pause();
-                    }
-                    if (currentState === 'intro') {
-                        introVideo.pause();
-                    }
-                } else {
-                    if (currentState === 'zoltar' || currentState === 'arrow') {
-                        signVideo.play();
-                    } else if (currentState === 'intro') {
-                        introVideo.play();
-                    } else {
-                        showNextQuestion();
-                    }
-                }
-            }
-            if (code === 'ArrowLeft') {
-                frozen = false;
-                goToQuestion(currentQuestionIndex - 1);
-            }
-            if (code === 'ArrowRight') {
-                frozen = false;
-                goToQuestion(currentQuestionIndex + 1);
-            }
-        }
-
+        // Spacebar refreshes the page and requests fullscreen
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            if (e.code === 'Space') {
                 e.preventDefault();
-                handleKey(e.code);
-            }
-        });
-
-        // Listen for forwarded keys from parent frame
-        window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'kaos-key') {
-                handleKey(e.data.code);
+                // Request fullscreen
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Fullscreen request failed:', err);
+                    });
+                }
+                location.reload();
             }
         });
     </script>

@@ -49,6 +49,7 @@ user32 = ctypes.windll.user32
 MOD_ALT = 0x0001
 MOD_CONTROL = 0x0002
 VK_K = 0x4B
+VK_Z = 0x5A
 PM_REMOVE = 0x0001
 
 # All Windows cursor types
@@ -209,6 +210,7 @@ class MouseHider:
         if self.hidden:
             self.show_cursor()
         user32.UnregisterHotKey(None, 1)
+        user32.UnregisterHotKey(None, 2)
         icon.stop()
         sys.exit(0)
     
@@ -224,13 +226,9 @@ class MouseHider:
         self.icon = pystray.Icon("mouse_hider", icon_image, 
                                  "Mouse Hider - Cursor: Visible\nCtrl+Alt+K to toggle", 
                                  menu)
-        # Start tray icon using pystray's detached runner to avoid blocking
-        try:
-            self.icon.run_detached()
-        except Exception:
-            # Fallback to thread if run_detached is unavailable
-            icon_thread = threading.Thread(target=self.icon.run, daemon=True)
-            icon_thread.start()
+        # Start tray icon in a separate thread to avoid blocking
+        icon_thread = threading.Thread(target=self.icon.run, daemon=True)
+        icon_thread.start()
         
         # Start the mouse movement thread
         self.mouse_move_thread = threading.Thread(target=self.move_mouse_periodically, daemon=True)
@@ -241,16 +239,21 @@ def main():
     hider.setup_tray_icon()
     
     print("Mouse Hide Toggle running in system tray")
-    print("Press CTRL+ALT+K to toggle cursor visibility")
+    print("Press CTRL+ALT+K or CTRL+ALT+Z to toggle cursor visibility")
     print("Mouse will move every 3 minutes to prevent system sleep")
     print("Right-click tray icon to quit")
     print("\nNOTE: If you have custom/large cursors enabled, this will replace them temporarily.")
     
     if not user32.RegisterHotKey(None, 1, MOD_CONTROL | MOD_ALT, VK_K):
-        print("Failed to register hotkey!")
+        print("Failed to register hotkey CTRL+ALT+K!")
         return
     
-    print("Hotkey registered successfully!")
+    if not user32.RegisterHotKey(None, 2, MOD_CONTROL | MOD_ALT, VK_Z):
+        print("Failed to register hotkey CTRL+ALT+Z!")
+        user32.UnregisterHotKey(None, 1)
+        return
+    
+    print("Hotkeys registered successfully!")
     
     try:
         msg = wintypes.MSG()
@@ -266,6 +269,7 @@ def main():
                 time.sleep(0.01)
     finally:
         user32.UnregisterHotKey(None, 1)
+        user32.UnregisterHotKey(None, 2)
         if hider.hidden:
             hider.show_cursor()
 

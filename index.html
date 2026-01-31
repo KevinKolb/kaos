@@ -33,20 +33,11 @@
     <iframe id="answersFrame" src="answers/index.html"></iframe>
 
     <script>
-        // Keep focus on parent body so all keyboard events come here
-        document.body.tabIndex = 0;
-        document.body.focus();
-        document.body.style.outline = 'none';
-
-        // Forward keyboard events to iframes via postMessage
+        // Spacebar refreshes the page
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            if (e.code === 'Space') {
                 e.preventDefault();
-                e.stopPropagation();
-                const msg = { type: 'kaos-key', code: e.code };
-                document.getElementById('questionsFrame').contentWindow.postMessage(msg, '*');
-                document.getElementById('answersFrame').contentWindow.postMessage(msg, '*');
-                return false;
+                location.reload();
             }
         });
     </script>
