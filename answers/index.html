@@ -208,12 +208,12 @@ html, body {
 
   // Hard-coded durations (ms) - keeps both screens in sync
   const VIDEO_DURATION = 6000;          // kaos_water.mp4 (matches KAOS_SIGN.mp4)
-  const BUBBLE_BEFORE_ANSWER = 7000;    // matches question (6s) + fade (1s)
-  const ANSWER_DURATION = 6000;         // answer display (matches ZOLTAR_ORANGE_2.mp4)
-  const BUBBLE_AFTER_ANSWER = 6000;     // matches down_arrow.mp4
+  const BUBBLE_BEFORE_ANSWER = 7000;    // bubbles only - matches question (6s) + fade (1s)
+  const BUBBLE_CONTINUED = 6000;        // bubbles only continued - matches ZOLTAR_ORANGE_2.mp4
+  const ANSWER_DURATION = 6000;         // answer display with bubbles - matches down_arrow.mp4
   
   // Total cycle time per answer
-  const CYCLE_TIME = VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + ANSWER_DURATION + BUBBLE_AFTER_ANSWER; // 25000ms
+  const CYCLE_TIME = VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED + ANSWER_DURATION; // 25000ms
   const TOTAL_CYCLE = CYCLE_TIME * textsWithRatings.length; // Full loop
   
   // Clock-based sync: calculate position in cycle from system time
@@ -250,23 +250,23 @@ html, body {
         // Too far in, skip to next phase
         const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) - positionInAnswer;
         ensureBubbles();
-        showBubblePause(true, timeLeft);
+        showBubblePause('before', timeLeft);
       }
     } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) {
-      // Should be in first bubble pause
+      // Should be in first bubble pause (during question)
       const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) - positionInAnswer;
       ensureBubbles();
-      showBubblePause(true, timeLeft);
-    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + ANSWER_DURATION) {
-      // Should be in answer
-      const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + ANSWER_DURATION) - positionInAnswer;
+      showBubblePause('before', timeLeft);
+    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) {
+      // Should be in continued bubble pause (during zoltar)
+      const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) - positionInAnswer;
       ensureBubbles();
-      showAnswer(timeLeft);
+      showBubblePause('continued', timeLeft);
     } else {
-      // Should be in second bubble pause
+      // Should be in answer (during down_arrow)
       const timeLeft = CYCLE_TIME - positionInAnswer;
       ensureBubbles();
-      showBubblePause(false, timeLeft);
+      showAnswer(timeLeft);
     }
   }
 
@@ -288,7 +288,7 @@ html, body {
       // If play fails, skip to next phase
       introVideo.style.display = 'none';
       ensureBubbles();
-      showBubblePause(true);
+      showBubblePause('before');
     });
 
     // Hard cutoff after duration
@@ -296,34 +296,42 @@ html, body {
       introVideo.pause();
       introVideo.style.display = 'none';
       ensureBubbles();
-      showBubblePause(true);
+      showBubblePause('before');
     }, duration);
   }
 
-  // Step 2: Bubbles-only pause between video/answers
-  function showBubblePause(beforeAnswer, duration = null) {
+  // Step 2: Bubbles-only pause (before answer, continued, or after)
+  function showBubblePause(phase, duration = null) {
     currentState = 'bubbles';
 
     // Make sure text is hidden
     zoomText.style.opacity = '0';
     zoomText.style.transition = 'none';
     
-    // Use appropriate duration based on position
+    // Use appropriate duration based on phase
     if (duration === null) {
-      duration = beforeAnswer ? BUBBLE_BEFORE_ANSWER : BUBBLE_AFTER_ANSWER;
+      if (phase === 'before') {
+        duration = BUBBLE_BEFORE_ANSWER;
+      } else if (phase === 'continued') {
+        duration = BUBBLE_CONTINUED;
+      }
     }
 
     stepTimeout = setTimeout(() => {
-      if (beforeAnswer) {
+      if (phase === 'before') {
+        // After first bubble pause: go to continued bubbles
+        showBubblePause('continued');
+      } else if (phase === 'continued') {
+        // After continued bubble pause: show answer
         showAnswer();
       } else {
-        // After an answer: advance to next answer or loop
+        // After answer: advance to next answer or loop
         currentAnswerIndex++;
         if (currentAnswerIndex >= textsWithRatings.length) {
           currentAnswerIndex = 0;
           playKaosWater();
         } else {
-          showAnswer();
+          showBubblePause('before');
         }
       }
     }, duration);
@@ -376,9 +384,15 @@ html, body {
       zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
     }, outroDelay);
 
-    // After remaining duration, go to bubble pause
+    // After remaining duration, advance to next cycle
     stepTimeout = setTimeout(() => {
-      showBubblePause(false);
+      currentAnswerIndex++;
+      if (currentAnswerIndex >= textsWithRatings.length) {
+        currentAnswerIndex = 0;
+        playKaosWater();
+      } else {
+        showBubblePause('before');
+      }
     }, duration);
   }
 
