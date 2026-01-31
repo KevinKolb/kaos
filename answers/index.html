@@ -207,6 +207,13 @@ html, body {
   const VIDEO_DURATION = 6000;    // kaos_water.mp4 (matches KAOS_SIGN.mp4)
   const BUBBLE_DURATION = 13000;  // question (6s) + fade (1s) + ZOLTAR_ORANGE_2 (6s)
   const ANSWER_DURATION = 6000;   // matches down_arrow.mp4
+  
+  // Total cycle time per answer
+  const CYCLE_TIME = VIDEO_DURATION + BUBBLE_DURATION + ANSWER_DURATION + BUBBLE_DURATION; // 38000ms
+  const TOTAL_CYCLE = CYCLE_TIME * textsWithRatings.length; // Full loop
+  
+  // Clock-based sync: calculate position in cycle from system time
+  let syncCheckInterval = null;
 
   function clearTimers() {
     clearTimeout(stepTimeout);
@@ -214,9 +221,43 @@ html, body {
     stepTimeout = null;
     outroTimeout = null;
   }
+  
+  function getCurrentCyclePosition() {
+    const now = Date.now();
+    const positionInCycle = now % TOTAL_CYCLE;
+    return positionInCycle;
+  }
+  
+  function syncToClockPosition() {
+    const position = getCurrentCyclePosition();
+    
+    // Determine which answer and what phase we should be in
+    const answerCycle = Math.floor(position / CYCLE_TIME);
+    const positionInAnswer = position % CYCLE_TIME;
+    
+    currentAnswerIndex = answerCycle;
+    
+    if (positionInAnswer < VIDEO_DURATION) {
+      // Should be in video
+      const timeLeft = VIDEO_DURATION - positionInAnswer;
+      playKaosWater(timeLeft);
+    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_DURATION) {
+      // Should be in first bubble pause
+      const timeLeft = (VIDEO_DURATION + BUBBLE_DURATION) - positionInAnswer;
+      showBubblePause(true, timeLeft);
+    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_DURATION + ANSWER_DURATION) {
+      // Should be in answer
+      const timeLeft = (VIDEO_DURATION + BUBBLE_DURATION + ANSWER_DURATION) - positionInAnswer;
+      showAnswer(timeLeft);
+    } else {
+      // Should be in second bubble pause
+      const timeLeft = CYCLE_TIME - positionInAnswer;
+      showBubblePause(false, timeLeft);
+    }
+  }
 
   // Step 1: Play kaos_water video
-  function playKaosWater() {
+  function playKaosWater(duration = VIDEO_DURATION) {
     currentState = 'video';
     clearTimers();
 
@@ -226,20 +267,21 @@ html, body {
 
     // Show and play video
     introVideo.style.display = 'block';
-    introVideo.currentTime = 0;
+    const elapsed = VIDEO_DURATION - duration;
+    introVideo.currentTime = Math.max(0, elapsed / 1000);
     introVideo.play().catch(e => console.log('Video play failed:', e));
 
-    // Hard cutoff after fixed duration
+    // Hard cutoff after remaining duration
     stepTimeout = setTimeout(() => {
       introVideo.pause();
       introVideo.style.display = 'none';
       ensureBubbles();
       showBubblePause(true);
-    }, VIDEO_DURATION);
+    }, duration);
   }
 
   // Step 2: Bubbles-only pause between video/answers
-  function showBubblePause(beforeAnswer) {
+  function showBubblePause(beforeAnswer, duration = BUBBLE_DURATION) {
     currentState = 'bubbles';
 
     // Make sure text is hidden
@@ -259,11 +301,11 @@ html, body {
           showAnswer();
         }
       }
-    }, BUBBLE_DURATION);
+    }, duration);
   }
 
   // Step 3: Show answer text
-  function showAnswer() {
+  function showAnswer(duration = ANSWER_DURATION) {
     currentState = 'answer';
     const item = textsWithRatings[currentAnswerIndex];
 
@@ -272,33 +314,47 @@ html, body {
     const useWordWrap = !hasPipes && lines.length >= 4;
     const processedLines = useWordWrap ? findBestLineBreaks(lines) : lines;
 
-    zoomText.style.transition = "none";
-    zoomText.style.filter = "blur(20px)";
-    zoomText.style.opacity = "0";
-    zoomText.style.transform = "translate(-50%, 0) scale(0.6) rotate(-8deg)";
-
+    const elapsed = ANSWER_DURATION - duration;
+    const introDone = elapsed >= 1500;
+    
     zoomText.innerHTML = processedLines.map(line => `<span class="word">${line}</span>`).join("");
     zoomText.style.fontSize = item.fontSize || getTextStyle(processedLines, false).size;
 
-    // Intro transition
-    zoomText.style.transition = "filter 1.5s ease-out, opacity 1.5s ease-out, transform 1.5s ease-out";
-    zoomText.style.filter = "blur(0)";
-    zoomText.style.opacity = "1";
-    zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
+    if (!introDone) {
+      // Still in intro phase
+      zoomText.style.transition = "none";
+      zoomText.style.filter = "blur(20px)";
+      zoomText.style.opacity = "0";
+      zoomText.style.transform = "translate(-50%, 0) scale(0.6) rotate(-8deg)";
+      
+      setTimeout(() => {
+        zoomText.style.transition = "filter 1.5s ease-out, opacity 1.5s ease-out, transform 1.5s ease-out";
+        zoomText.style.filter = "blur(0)";
+        zoomText.style.opacity = "1";
+        zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
+      }, 10);
+    } else {
+      // Already past intro, show immediately
+      zoomText.style.transition = "none";
+      zoomText.style.filter = "blur(0)";
+      zoomText.style.opacity = "1";
+      zoomText.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
+    }
 
-    // Outro transition at 4.5s (intro 1.5s + visible + outro 1.5s = 6s total)
+    // Outro transition
+    const outroDelay = Math.max(0, duration - 1500);
     outroTimeout = setTimeout(() => {
       const exitRotate = Math.random() * 30 - 15;
       zoomText.style.transition = "filter 1.5s ease-in, opacity 1.5s ease-in, transform 1.5s ease-in";
       zoomText.style.filter = "blur(18px)";
       zoomText.style.opacity = "0";
       zoomText.style.transform = `translate(-50%, 0) scale(0.35) rotate(${exitRotate}deg)`;
-    }, ANSWER_DURATION - 1500);
+    }, outroDelay);
 
-    // After fixed answer duration, go to bubble pause
+    // After remaining duration, go to bubble pause
     stepTimeout = setTimeout(() => {
       showBubblePause(false);
-    }, ANSWER_DURATION);
+    }, duration);
   }
 
   // Text sizing helpers
@@ -380,11 +436,26 @@ html, body {
     return bestLines;
   }
 
-  // Spacebar refreshes the page
+  // Spacebar resyncs to clock and makes Chrome fullscreen
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
       e.preventDefault();
-      location.reload();
+      
+      // Request fullscreen
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log('Fullscreen request failed:', err);
+        });
+      }
+      
+      // Resync to clock
+      clearTimers();
+      if (bubbleInterval) {
+        clearInterval(bubbleInterval);
+        bubbleInterval = null;
+      }
+      introVideo.load();
+      syncToClockPosition();
     }
   });
 
@@ -395,21 +466,22 @@ html, body {
   introVideo.setAttribute('webkit-playsinline', '');
   introVideo.playsInline = true;
 
-  // Start: play kaos_water video with hard-coded cutoff
+  // Start: sync to clock position
   introVideo.load();
-  introVideo.play().catch(() => {
-    introVideo.style.display = 'none';
-    ensureBubbles();
-    if (!frozen) showBubblePause(true);
-  });
-
-  // Hard cutoff after fixed duration
-  stepTimeout = setTimeout(() => {
-    introVideo.pause();
-    introVideo.style.display = 'none';
-    ensureBubbles();
-    showBubblePause(true);
-  }, VIDEO_DURATION);
+  syncToClockPosition();
+  
+  // Resync every 30 seconds to prevent any drift
+  syncCheckInterval = setInterval(() => {
+    const position = getCurrentCyclePosition();
+    const answerCycle = Math.floor(position / CYCLE_TIME);
+    
+    // Only resync if we've drifted to wrong answer
+    if (answerCycle !== currentAnswerIndex) {
+      console.log('Drift detected, resyncing...');
+      clearTimers();
+      syncToClockPosition();
+    }
+  }, 30000);
 </script>
 </body>
 </html>
