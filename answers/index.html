@@ -154,7 +154,7 @@ html, body {
     { text: "THEY'RE EATING|THE DOGS!", align: "center" },                          
     { text: "THE FAILING|NEW YORK TIMES|SAYS YES", align: "center" },
     { text: "QUIET|PIGGY", align: "center" },                           
-    { text: "IT'S A|HOAX", align: "center" }
+    { text: "IT'S A|HOAX", align: "center" },
     { text: "WHAT A STUPID|QUESTION", align: "center" }
   ];
 
@@ -207,12 +207,13 @@ html, body {
   }
 
   // Hard-coded durations (ms) - keeps both screens in sync
-  const VIDEO_DURATION = 6000;    // kaos_water.mp4 (matches KAOS_SIGN.mp4)
-  const BUBBLE_DURATION = 13000;  // question (6s) + fade (1s) + ZOLTAR_ORANGE_2 (6s)
-  const ANSWER_DURATION = 6000;   // matches down_arrow.mp4
+  const VIDEO_DURATION = 6000;          // kaos_water.mp4 (matches KAOS_SIGN.mp4)
+  const BUBBLE_BEFORE_ANSWER = 7000;    // matches question (6s) + fade (1s)
+  const ANSWER_DURATION = 6000;         // answer display (matches ZOLTAR_ORANGE_2.mp4)
+  const BUBBLE_AFTER_ANSWER = 6000;     // matches down_arrow.mp4
   
   // Total cycle time per answer
-  const CYCLE_TIME = VIDEO_DURATION + BUBBLE_DURATION + ANSWER_DURATION + BUBBLE_DURATION; // 38000ms
+  const CYCLE_TIME = VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + ANSWER_DURATION + BUBBLE_AFTER_ANSWER; // 25000ms
   const TOTAL_CYCLE = CYCLE_TIME * textsWithRatings.length; // Full loop
   
   // Clock-based sync: calculate position in cycle from system time
@@ -247,18 +248,18 @@ html, body {
         playKaosWater(VIDEO_DURATION);
       } else {
         // Too far in, skip to next phase
-        const timeLeft = (VIDEO_DURATION + BUBBLE_DURATION) - positionInAnswer;
+        const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) - positionInAnswer;
         ensureBubbles();
         showBubblePause(true, timeLeft);
       }
-    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_DURATION) {
+    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) {
       // Should be in first bubble pause
-      const timeLeft = (VIDEO_DURATION + BUBBLE_DURATION) - positionInAnswer;
+      const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) - positionInAnswer;
       ensureBubbles();
       showBubblePause(true, timeLeft);
-    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_DURATION + ANSWER_DURATION) {
+    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + ANSWER_DURATION) {
       // Should be in answer
-      const timeLeft = (VIDEO_DURATION + BUBBLE_DURATION + ANSWER_DURATION) - positionInAnswer;
+      const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + ANSWER_DURATION) - positionInAnswer;
       ensureBubbles();
       showAnswer(timeLeft);
     } else {
@@ -300,12 +301,17 @@ html, body {
   }
 
   // Step 2: Bubbles-only pause between video/answers
-  function showBubblePause(beforeAnswer, duration = BUBBLE_DURATION) {
+  function showBubblePause(beforeAnswer, duration = null) {
     currentState = 'bubbles';
 
     // Make sure text is hidden
     zoomText.style.opacity = '0';
     zoomText.style.transition = 'none';
+    
+    // Use appropriate duration based on position
+    if (duration === null) {
+      duration = beforeAnswer ? BUBBLE_BEFORE_ANSWER : BUBBLE_AFTER_ANSWER;
+    }
 
     stepTimeout = setTimeout(() => {
       if (beforeAnswer) {
