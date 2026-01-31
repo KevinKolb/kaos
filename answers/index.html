@@ -213,9 +213,10 @@ html, body {
   const BUBBLE_CONTINUED = 6000;        // bubbles only continued - matches ZOLTAR_ORANGE_2.mp4
   const ANSWER_DURATION = 6000;         // answer display with bubbles - matches down_arrow.mp4
   
-  // Total cycle time per answer
-  const CYCLE_TIME = VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED + ANSWER_DURATION; // 25000ms
-  const TOTAL_CYCLE = CYCLE_TIME * textsWithRatings.length; // Full loop
+  // Per-answer cycle time (no video between answers)
+  const ANSWER_CYCLE_TIME = BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED + ANSWER_DURATION; // 19000ms
+  // Full loop: video plays once, then all answers cycle
+  const TOTAL_CYCLE = VIDEO_DURATION + ANSWER_CYCLE_TIME * textsWithRatings.length; // 272000ms
   
   // Clock-based sync: calculate position in cycle from system time
   let syncCheckInterval = null;
@@ -235,37 +236,42 @@ html, body {
   
   function syncToClockPosition() {
     const position = getCurrentCyclePosition();
-    
-    // Determine which answer and what phase we should be in
-    const answerCycle = Math.floor(position / CYCLE_TIME);
-    const positionInAnswer = position % CYCLE_TIME;
-    
-    currentAnswerIndex = answerCycle;
-    
-    if (positionInAnswer < VIDEO_DURATION) {
-      // Should be in video - only play from start, don't seek
-      if (positionInAnswer < 500) {
-        // Close enough to start, play the video
-        playKaosWater(VIDEO_DURATION);
+
+    if (position < VIDEO_DURATION) {
+      // Should be in video phase (only at start of loop)
+      if (position < 500) {
+        currentAnswerIndex = 0;
+        playKaosWater(VIDEO_DURATION - position);
       } else {
-        // Too far in, skip to next phase
-        const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) - positionInAnswer;
+        // Too far into video, skip to first answer's bubble phase
+        currentAnswerIndex = 0;
+        const timeLeft = VIDEO_DURATION + BUBBLE_BEFORE_ANSWER - position;
         ensureBubbles();
         showBubblePause('before', timeLeft);
       }
-    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) {
-      // Should be in first bubble pause (during question)
-      const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER) - positionInAnswer;
+      return;
+    }
+
+    // Past the video: determine which answer and phase
+    const posAfterVideo = position - VIDEO_DURATION;
+    const answerCycle = Math.floor(posAfterVideo / ANSWER_CYCLE_TIME);
+    const posInAnswer = posAfterVideo % ANSWER_CYCLE_TIME;
+
+    currentAnswerIndex = answerCycle;
+
+    if (posInAnswer < BUBBLE_BEFORE_ANSWER) {
+      // In first bubble pause (during question)
+      const timeLeft = BUBBLE_BEFORE_ANSWER - posInAnswer;
       ensureBubbles();
       showBubblePause('before', timeLeft);
-    } else if (positionInAnswer < VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) {
-      // Should be in continued bubble pause (during zoltar)
-      const timeLeft = (VIDEO_DURATION + BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) - positionInAnswer;
+    } else if (posInAnswer < BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) {
+      // In continued bubble pause (during zoltar)
+      const timeLeft = (BUBBLE_BEFORE_ANSWER + BUBBLE_CONTINUED) - posInAnswer;
       ensureBubbles();
       showBubblePause('continued', timeLeft);
     } else {
-      // Should be in answer (during down_arrow)
-      const timeLeft = CYCLE_TIME - positionInAnswer;
+      // In answer display (during down_arrow)
+      const timeLeft = ANSWER_CYCLE_TIME - posInAnswer;
       ensureBubbles();
       showAnswer(timeLeft);
     }
@@ -538,10 +544,17 @@ html, body {
   // Resync every 30 seconds to prevent any drift
   syncCheckInterval = setInterval(() => {
     const position = getCurrentCyclePosition();
-    const answerCycle = Math.floor(position / CYCLE_TIME);
-    
+
+    // Determine expected answer index from clock
+    let expectedIndex;
+    if (position < VIDEO_DURATION) {
+      expectedIndex = 0;
+    } else {
+      expectedIndex = Math.floor((position - VIDEO_DURATION) / ANSWER_CYCLE_TIME);
+    }
+
     // Only resync if we've drifted to wrong answer
-    if (answerCycle !== currentAnswerIndex) {
+    if (expectedIndex !== currentAnswerIndex) {
       console.log('Drift detected, resyncing...');
       clearTimers();
       syncToClockPosition();
